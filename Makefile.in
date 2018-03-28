@@ -1,0 +1,27 @@
+include ../Makefile.global
+include ../inc_Makefile_src
+OBJECTS=$(_SOURCES:.F90=.o)
+EXECUTABLE = ../bin/adapt
+SOURCE_DIR = ../src
+#GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
+
+
+compile: write $(EXECUTABLE)
+	@true
+
+VPATH := $(SOURCE_DIR)
+
+write:
+	@echo "COMPILING PROGRAM:" `pwd`
+
+$(EXECUTABLE): $(OBJECTS)
+	$(FC) $(FFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
+
+%.o: %.F90
+	$(FC) -c $(FFLAGS) $(INCLUDE) $< -o $@
+	
+include ../inc_Makefile_dep
+../inc_Makefile_src ../inc_Makefile_dep:
+	cd ../; tools/make_dependencies.py src/ 
+
+.PHONY: write

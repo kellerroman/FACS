@@ -1,0 +1,50 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+FILENAME_IN	adapt.F90	/^character(len=*),parameter          :: FILENAME_IN /;"	v	program:adapt
+MAXCELLS	adapt.F90	/^integer         , parameter         :: MAXCELLS /;"	v	program:adapt
+MAXPNTS	adapt.F90	/^integer         , parameter         :: MAXPNTS /;"	v	program:adapt
+adapt	adapt.F90	/^program adapt$/;"	p
+calc_center	grid_metrics.F90	/^subroutine calc_center(/;"	s	module:grid_metrics
+calc_gradient	choose.F90	/^subroutine calc_gradient(/;"	s	module:choose
+cells	adapt.F90	/^type(tCell), allocatable            :: cells(/;"	v	program:adapt
+center	types.F90	/^   real(kind = 8)                         :: center(/;"	k	type:tCell
+child	types.F90	/^   integer                                :: child(/;"	k	type:tParentCell
+choose	choose.F90	/^module choose$/;"	m
+choose_cells	choose.F90	/^subroutine choose_cells(/;"	s	module:choose
+doRefinement	refinement.F90	/^subroutine doRefinement /;"	s	module:refinement
+file_io	file_io.F90	/^module file_io$/;"	m
+grad	types.F90	/^   real(kind = 8)                         :: grad(/;"	k	type:tCell
+grad_avg	choose.F90	/^real(kind = 8) :: grad_avg$/;"	v	module:choose
+grad_max	choose.F90	/^real(kind = 8) :: grad_max$/;"	v	module:choose
+grad_min	choose.F90	/^real(kind = 8) :: grad_min$/;"	v	module:choose
+grad_ref	choose.F90	/^real(kind = 8) :: grad_ref /;"	v	module:choose
+grid_metrics	grid_metrics.F90	/^module grid_metrics$/;"	m
+iter	adapt.F90	/^integer                             :: iter,/;"	v	program:adapt
+n	adapt.F90	/^int/;"	v	program:adapt
+nCells	adapt.F90	/^integer                             :: nCells$/;"	v	program:adapt
+nParentCells	adapt.F90	/^integer                             :: nParentCells$/;"	v	program:adapt
+nPnts	adapt.F90	/^integer                             :: nPnts$/;"	v	program:adapt
+neigh	types.F90	/^   integer                                :: neigh(/;"	k	type:tCell
+neigh	types.F90	/^   integer                                :: neigh(/;"	k	type:tParentCell
+parent	types.F90	/^   integer                                :: parent$/;"	k	type:tParentCell
+parentCells	adapt.F90	/^type(tParentCell), allocatable      :: parentCells(/;"	v	program:adapt
+pnts	adapt.F90	/^real(kind = 8), allocatable         :: pnts(/;"	v	program:adapt
+pnts	types.F90	/^   integer                                :: pnts(/;"	k	type:tCell
+pnts	types.F90	/^   integer                                :: pnts(/;"	k	type:tParentCell
+r	adapt.F90	/^re/;"	v	program:adapt
+read_sol	file_io.F90	/^subroutine read_sol(/;"	s	module:file_io
+ref	types.F90	/^   integer                                :: ref$/;"	k	type:tCell
+ref	types.F90	/^   integer                                :: ref$/;"	k	type:tParentCell
+refine	adapt.F90	/^integer, allocatable                :: refine(/;"	v	program:adapt
+refineLevel	types.F90	/^   integer                                :: refineLevel(/;"	k	type:tCell
+refineLevel	types.F90	/^   integer                                :: refineLevel(/;"	k	type:tParentCell
+refinement	refinement.F90	/^module refinement$/;"	m
+tCell	types.F90	/^type :: tCell$/;"	t	module:types
+tParentCell	types.F90	/^type :: tParentCell$/;"	t	module:types
+types	types.F90	/^module types$/;"	m
+var	types.F90	/^   real(kind = 8)                         :: var$/;"	k	type:tCell
+write_sol	file_io.F90	/^subroutine write_sol(/;"	s	module:file_io
