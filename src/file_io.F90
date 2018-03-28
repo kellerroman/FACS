@@ -1,5 +1,7 @@
 module file_io
+use const
 use types
+
 
 implicit none
 contains
@@ -78,13 +80,14 @@ end do
 close(fi)
 nParentCells = nCells
 do i = 1, nParentCells
-   parentCells(i) % pnts         = cells(i) % pnts
-   parentCells(i) % neigh        = cells(i) % neigh
-   parentCells(i) % refineLevel  = cells(i) % refineLevel
-   parentCells(i) % parent       = -1
-   parentCells(i) % child        = -1
-   cells(i) % ref                = i
-   parentCells(i) % ref          = i
+   parentCells(i) % pnts          = cells(i) % pnts
+   parentCells(i) % neigh         = cells(i) % neigh
+   parentCells(i) % refineLevel   = cells(i) % refineLevel
+   parentCells(i) % parent        = NO_CELL 
+   parentCells(i) % child         = NO_CELL
+   cells(i) % ref                 = i
+   parentCells(i) % ref           = i
+   parentCells(i) % pos_CanCoarse = NO_CELL
 end do
 end subroutine read_sol
 

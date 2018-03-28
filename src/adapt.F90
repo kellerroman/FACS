@@ -66,7 +66,7 @@ allocate (canCoarseList(MAXCELLS))
 allocate (doCoarseList(MAXCELLS))
 nCanCoarse = 0
 
-do iter = 1,5
+do iter = 1,8
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
    do n = 1, nCells
       r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
@@ -93,14 +93,14 @@ do iter = 1,5
                      ,doCoarseList,nDoCoarse                            &
                      ,.false.)
    call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
-   write(*,*) canCoarseList(1:nCanCoarse)
+   write(*,*) "Coarseable Cells:",canCoarseList(1:nCanCoarse)
 end do
 do n = 1, nCells
    r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
    cells(n) % var = tanh(4.0d0* (2.0d0*r-1.0d0))*0.5d0 + 0.5d0
 end do
 call check_neighbors(cells,nCells,pnts)
-call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN)
+!call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN)
 
 do n = 1, nCells
    write(666,*) n, cells(n) % neigh

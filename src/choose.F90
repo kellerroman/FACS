@@ -134,10 +134,11 @@ do i = 1, nCanCoarse
    end do
    if (doCoarse) then
       cc = parentCells(pc) % child(1)
-      cc = parentCells(cc) % ref
+      c = parentCells(cc) % ref
       nDoCoarse = nDoCoarse + 1
-      doCoarseList(nDoCoarse) = cc
-      write(*,*) "Combined:",cc,pc, nDoCoarse
+      doCoarseList(nDoCoarse) = c
+      write(*,*) "Combined:",c,"ParentCell:",cc,"ParentsParent:",pc, nDoCoarse
+      write(*,*) cells(c) % neigh
    end if
 end do
 end subroutine
@@ -166,7 +167,9 @@ do i = 1, nCells
    else if (nl /= 0 .and. nh == 0) then
       grad = (cells(i) % var - cells(nl) % var) * (cells(i) % center(1) - cells(nl) % center(1))
    else
-      write(*,*) "I-Derivative not yet supported",i,nl,nh
+      write(*,*) "I-Derivative not yet supported"
+      write(*,*) "cell:",i,"Neigh-Left:",nl,"Neigh-Right:",nh
+      write(*,*) "neighbors:", cells(i) % neigh
       stop 1
    end if
    cells(i) % grad(1) = grad

@@ -1,0 +1,11 @@
+bin/
+obj/
+*.mod
+*.o
+tools/bin/
+fort.*
+gridgen
+*.dat
+*.vtk
+inc_Makefile_*
+.*.swp

@@ -1,4 +1,5 @@
 module refinement
+use const
 contains
 subroutine doRefinement (cells,parentCells,pnts,nCells,nParentCells,nPnts  &
                         ,refineType,refineList,nRefine                     &
@@ -35,7 +36,14 @@ integer                                   :: nMaxParentCells
 integer                                   :: nMaxPnts
 
 integer, allocatable                      :: CellId_old2new(:)
-integer, allocatable                      :: CellMove(:)
+
+! Cell Movement
+integer                                   :: ci,ri,dm, nIntervall
+integer, allocatable                      :: intervall_starts(:)
+integer, allocatable                      :: intervall_ends(:)
+integer, allocatable                      :: intervall_dirs(:)
+integer, allocatable                      :: intervall_dms(:)
+
 
 integer                                   :: i,r,ctr,nc,oc,nc1,nc2,nc3
 integer                                   :: opc,npc1,npc2,npc3,npc4              ! New Parent cells
@@ -56,7 +64,7 @@ nMaxPnts  = ubound(pnts,2)
 
 nNewPnts        = nPnts        + 5 * (nRefine - nDoCoarse)
 nNewCells       = nCells       + 3 * (nRefine - nDoCoarse)
-nNewParentCells = nParentCells + 4 * (nRefine - nDoCoarse)
+nNewParentCells = nParentCells + 4 * nRefine !(nRefine - nDoCoarse)
 
 if (nNewCells > nMaxCells) then
    write(*,*) "Maximum number of Cells reached"
@@ -73,38 +81,134 @@ if (nNewPnts  > nMaxPnts) then
    stop 1
 end if
 
-allocate (CellId_old2new(0:nNewCells))
-allocate (CellMove(nCells))
+allocate (CellId_old2new(NO_CELL:nNewCells))
 ! Sort of Refinemnet and Coarseing List
-
-!do i = 1, 
-
-
-
-
-CellMove(1) = 0
-CellId_old2new(1) = 1
-CellId_old2new(0) = 0
-
-do i = 2, nCells
-   if (refineType(i-1) == 3) then
-      CellMove(i) =  CellMove(i-1) + 3
-   else
-      CellMove(i) =  CellMove(i-1)
-   end if
-   if (debug) write(*,*) i,CellMove(i), refineType(i)
-   CellId_old2new(i) = i + CellMove(i)
+nc1 = nDoCoarse
+do while (nc1 > 0)
+   nc2 = 0
+   do i = 2,nc1 
+      if (doCoarseList(i-1) > doCoarseList(i)) then
+         nc3 = doCoarseList(i)
+         doCoarseList(i) = doCoarseList(i-1)
+         doCoarseList(i-1) = nc3
+         nc2 = i 
+      end if
+   end do
+   nc1 = nc2
 end do
 
-!! Movement of the old Cells to their new location
-do i = nCells, 2,-1
-   ! stop if the last cell to move has been reached
-   if (CellMove(i) == 0) then
-      exit
+nc1 = nRefine
+do while (nc1 > 0)
+   nc2 = 0
+   do i = 2,nc1 
+      if (refineList(i-1) > refineList(i)) then
+         nc3 = refineList(i)
+         refineList(i) = refineList(i-1)
+         refineList(i-1) = nc3
+         nc2 = i 
+      end if
+   end do
+   nc1 = nc2
+end do
+
+nIntervall = nRefine + nDoCoarse
+
+if (max(doCoarseList(nDoCoarse) , refineList(nRefine)) < nCells) nIntervall = nIntervall + 1
+
+allocate(intervall_starts (nIntervall))
+allocate(intervall_ends   (nIntervall))
+allocate(intervall_dirs   (nIntervall))
+allocate(intervall_dms    (nIntervall))
+
+! to avaoid error List get a additonal element which prevents their furter
+! selection
+doCoarseList(nDoCoarse+1) = nCells+1
+refineList(nRefine+1)     = nCells+1
+
+ci = 1
+ri = 1
+intervall_starts(1) = 1
+intervall_dirs(:) = 1
+intervall_ends(nIntervall) = nCells
+intervall_dms(1) = 0
+do i = 2, nIntervall
+   intervall_ends(i-1) = min(doCoarseList(ci),refineList(ri))
+   intervall_starts(i) = intervall_ends(i-1) + 1
+   if (doCoarseList(ci) > refineList(ri)) then
+      ri = ri + 1
+      intervall_dms(i) = intervall_dms(i-1) + 3
+   else if (doCoarseList(ci) < refineList(ri)) then
+      ci = ci + 1
+      intervall_dms(i) = intervall_dms(i-1) - 3
+      intervall_starts(i) = intervall_starts(i) + 3
+      nc = intervall_ends(i - 1)
+      write(*,*) "Cell gets combined",nc,cells(nc) % neigh
+
+      ! Since Cell is overwritten after copy, the information must be copied
+      ! before hand.
+      cells(nc) % neigh(2) = cells(nc+3) % neigh(2)
+      cells(nc) % neigh(3) = cells(nc+1) % neigh(3)
+      cells(nc) % pnts(1)  = cells(nc+1) % pnts(1) 
+      cells(nc) % pnts(2)  = cells(nc+2) % pnts(2) 
+      cells(nc) % pnts(3)  = cells(nc+3) % pnts(3) 
+
+      ! Since Cells are ignored in the intervalls, the newId must be set here to
+      ! the surviving child new position
+      CellId_old2new(nc+1) = nc+intervall_dms(i-1)
+      CellId_old2new(nc+2) = nc+intervall_dms(i-1)
+      CellId_old2new(nc+3) = nc+intervall_dms(i-1)
+      write(*,*) "Cell new neigh ",cells(nc) % neigh
+      
    end if
-   nc = i+CellMove(i)
-   cells(nc) = cells(i) 
-   cells(i) % neigh = 0
+end do
+do i = 2, nIntervall
+   if (intervall_dms(i) > 0) then
+      dm                  = intervall_starts(i)
+      intervall_starts(i) = intervall_ends(i)
+      intervall_ends(i)   = dm                
+      intervall_dirs(i)   = -1
+   else
+      intervall_dirs(i)   = 1
+   end if
+end do
+
+nc1 = nIntervall
+do while (nc1 > 0)
+   nc2 = 0
+   do i = 3,nc1 
+      if (intervall_starts(i-1) < intervall_starts(i) .and. &
+          intervall_dirs(i-1) == -1 .and. &
+          intervall_dirs(i)   == -1) then
+         nc3 = intervall_starts(i)
+         intervall_starts(i) = intervall_starts(i-1)
+         intervall_starts(i-1) = nc3
+
+         nc3 = intervall_ends(i)
+         intervall_ends(i) = intervall_ends(i-1)
+         intervall_ends(i-1) = nc3
+
+         nc3 = intervall_dms(i)
+         intervall_dms(i) = intervall_dms(i-1)
+         intervall_dms(i-1) = nc3
+
+         nc2 = i 
+      end if
+   end do
+   nc1 = nc2
+end do
+
+CellId_old2new(1) = 1
+CellId_old2new(NO_CELL) = NO_CELL
+
+do ci = 1, nIntervall
+   dm = intervall_dms(ci)
+   do i = intervall_starts(ci),intervall_ends(ci),intervall_dirs(ci)
+      nc = i + dm 
+      if (debug) write(*,*) "Moving Cell from", i, nc
+      CellId_old2new(i) = nc
+      cells(nc) = cells(i)
+      parentCells(cells(nc) % ref) % ref = nc
+   end do
 end do
 
 ! Updated neighbour information to the new Cells structure
@@ -113,9 +217,9 @@ do i = 1, nNewCells
       cells(i) % neigh(r) = CellId_old2new(cells(i) % neigh(r))
    end do
 end do
+
 write(*,'("Number of Refinements : ",I0)') nRefine
 write(*,'("Number of Coarsenings : ",I0)') nDoCoarse
-write(*,*) doCoarseList(1:nDoCoarse)
 write(*,'("Number of New Cells   : ",I0)') nNewCells
 write(*,'("Number of New ParCells: ",I0)') nNewParentCells
 write(*,'("Number of New Points  : ",I0)') nNewPnts
@@ -184,7 +288,7 @@ do r = 1, nRefine
 
       ! neighbor LEFT
       nc = cells(oc) % neigh(1)
-      if (nc > 0) then
+      if (nc /= NO_CELL) then
          rfl  = cells(nc1) % refineLevel(2)
          nrfl = cells(nc ) % refineLevel(2)
          if ( nrfl < rfl) then    ! CASE 1
@@ -251,7 +355,7 @@ do r = 1, nRefine
       nc = cells(oc) % neigh(3)
       cells(nc1) % neigh(3) = nc
       if (debug) write(*,*) nc1,"setting south neighbor to", nc
-      if (nc > 0) then
+      if (nc /= NO_CELL) then
          if (cells(nc) % neigh(4) == oc) then
             cells(nc) % neigh(4) = nc1
             if (debug) write(*,*) nc,"setting north neighbor to", nc1
@@ -288,7 +392,7 @@ do r = 1, nRefine
       if (debug) write(*,*) nc2,"setting left neighbor to", nc1
       !Neighbor RIGHT
       nc = cells(oc) % neigh(2)
-      if (nc > 0) then
+      if (nc /= NO_CELL) then
          rfl  = cells(nc2) % refineLevel(2)
          nrfl = cells(nc ) % refineLevel(2)
          if ( nrfl < rfl) then
@@ -343,7 +447,7 @@ do r = 1, nRefine
 
       ! Neighbor SOUTH
       nc = cells(oc) % neigh(3)
-      if (nc > 0) then
+      if (nc /= NO_CELL) then
          rfl  = cells(nc2) % refineLevel(1)
          nrfl = cells(nc ) % refineLevel(1)
          if ( nrfl < rfl) then
@@ -412,7 +516,7 @@ do r = 1, nRefine
       nc = cells(oc) % neigh(2)
       cells(nc3) % neigh(2) = nc
       if (debug) write(*,*) nc3,"setting right neighbor to", nc
-      if (nc > 0) then
+      if (nc /= NO_CELL) then
          if (cells(nc) % neigh(1) == oc) then
             cells(nc) % neigh(1) = nc3
             if (debug) write(*,*) nc,"setting left neighbor to", nc3
@@ -430,7 +534,7 @@ do r = 1, nRefine
       if (debug) write(*,*) nc3,"setting south neighbor to", nc2
       ! Neighbor NORTH
       nc   = cells(oc ) % neigh(4)
-      if (nc > 0) then
+      if (nc /= NO_CELL) then
          rfl  = cells(nc3) % refineLevel(1)
          nrfl = cells(nc ) % refineLevel(1)
          if (debug) write(*,*) "cell",nc3,"ref:",rfl,"Neigh N",nc,"Ref:",nrfl
@@ -515,36 +619,38 @@ do r = 1, nRefine
       npc3 = nParentCells + 3
       npc4 = nParentCells + 4
       nParentCells = npc4
-      opc = cells(oc) % ref                  ! old parent cell
-      parentCells(opc) % ref = -1               ! Cell has childs, thus no tin cells array anymore
+      opc = cells(oc) % ref                      ! old parent cell
+      parentCells(opc) % ref = NO_CELL                ! Cell has childs, thus no tin cells array anymore
       parentCells(opc) % cut_type = 1
       parentCells(opc) % child(1) = npc1
       parentCells(opc) % child(2) = npc2
       parentCells(opc) % child(3) = npc3
       parentCells(opc) % child(4) = npc4
-      if (parentCells(opc) % parent == -1) then  !Cell on first level, no need to delet an old cell from the list (the parent)
+      if (parentCells(opc) % parent == NO_CELL) then  ! Cell on first level, no need to delet an old cell 
+                                                      ! from the list (the parent)
+         found = .false.
+      else !parent can be in the list
+         nc = parentCells(parentCells(opc) % parent) % pos_CanCoarse
+         if (nc /= NO_CELL) then
+            canCoarseList(nc) = opc
+            parentCells(opc) % pos_CanCoarse = nc
+            parentCells(parentCells(opc) % parent) % pos_CanCoarse = NO_CELL
+            found = .true.
+         else
+            found = .false.
+         end if
+      end if
+      if (.not. found) then
          nCanCoarse = nCanCoarse + 1 
          canCoarseList(nCanCoarse) = opc
-      else
-         found = .false.
-         do nc = 1, nCanCoarse
-            if (canCoarseList(nc) == parentCells(opc) % parent) then
-               found = .true.
-               canCoarseList(nc) = opc
-               exit
-            end if
-         end do
-         if (.not. found) then
-            nCanCoarse = nCanCoarse + 1 
-            canCoarseList(nCanCoarse) = opc
-         end if
+         parentCells(opc) % pos_CanCoarse = nCanCoarse
       end if
 
       ! 1 Child upper left
       parentCells(npc1) % parent   = opc
       parentCells(npc1) % ref      = oc                                 ! referencing
       cells(oc)         % ref      = npc1
-      parentCells(npc1) % child    = -1
+      parentCells(npc1) % child    = NO_CELL
       parentCells(npc1) % refineLevel = cells(oc) % refineLevel
       parentCells(npc1) % neigh(1) = parentCells(opc) % neigh(1)
       parentCells(npc1) % neigh(2) = npc4
@@ -554,7 +660,7 @@ do r = 1, nRefine
       parentCells(npc2) % parent   = opc
       parentCells(npc2) % ref      = nc1
       cells(nc1)        % ref      = npc2
-      parentCells(npc2) % child    = -1
+      parentCells(npc2) % child    = NO_CELL
       parentCells(npc2) % neigh(1) = parentCells(opc) % neigh(1)
       parentCells(npc2) % neigh(2) = npc3
       parentCells(npc2) % neigh(3) = parentCells(opc) % neigh(3)
@@ -564,7 +670,7 @@ do r = 1, nRefine
       parentCells(npc3) % parent   = opc
       parentCells(npc3) % ref      = nc2
       cells(nc2)        % ref      = npc3
-      parentCells(npc3) % child    = -1
+      parentCells(npc3) % child    = NO_CELL
       parentCells(npc3) % neigh(1) = npc2
       parentCells(npc3) % neigh(2) = parentCells(opc) % neigh(2)
       parentCells(npc3) % neigh(3) = parentCells(opc) % neigh(3)
@@ -574,7 +680,7 @@ do r = 1, nRefine
       parentCells(npc4) % parent   = opc
       parentCells(npc4) % ref      = nc3
       cells(nc3)        % ref      = npc4
-      parentCells(npc4) % child    = -1
+      parentCells(npc4) % child    = NO_CELL
       parentCells(npc4) % neigh(1) = npc1
       parentCells(npc4) % neigh(2) = parentCells(opc) % neigh(2)
       parentCells(npc4) % neigh(3) = npc3
@@ -586,6 +692,54 @@ do r = 1, nRefine
       write(*,*) "Refining Type not supported",__LINE__,__FILE__
       stop 1
    end if
+end do
+
+do r = 1, nDoCoarse
+   ctr = doCoarseList(r)
+   oc = CellId_old2new(ctr)
+   write(*,*) "Refined Cell:",r,ctr,oc
+   write(*,*) cells(oc) % neigh
+   cells(oc) % refineLevel = cells(oc) % refineLevel - 1
+   cells(oc) % center(:) = 0.25d0 * ( pnts(:,cells(oc) % pnts(1)) & 
+                                    + pnts(:,cells(oc) % pnts(2)) & 
+                                    + pnts(:,cells(oc) % pnts(3)) & 
+                                    + pnts(:,cells(oc) % pnts(4)) ) 
+   npc1 = cells(oc) % ref  ! ParentCell Equivalent
+   opc  = parentCells(npc1) % parent ! Parent of the Cell, which will be new reference
+   write(*,*) "ParentCell:",npc1, opc
+   parentCells(opc) % child = NO_CELL
+   parentCells(opc) % ref   = oc
+   cells(oc) % ref          = opc
+    
+   ! delete old parent cell from refinement
+   npc2 = parentCells(opc) % parent
+   ! If parent exist, the parent maybe can be added to the list avoiding
+   ! deleting the entry
+   if (npc2 /= NO_CELL) then
+      found = .true.
+      do i = 1,4
+         if (parentCells(parentCells(npc2) % child(i)) % child(1) /= NO_CELL) then
+            found = .false.
+            exit
+         end if
+      end do
+   else
+      found = .false.
+   end if
+
+   ! if parent has other childer with children or doesnt exist, entry must be
+   ! delted
+   ci = parentCells(opc) % pos_CanCoarse
+   parentCells(opc) % pos_CanCoarse = NO_CELL
+   if (found) then
+      canCoarseList(ci) = npc2
+   else
+      nCanCoarse = nCanCoarse - 1
+      do i = ci, nCanCoarse
+         canCoarseList(i) = canCoarseList(i+1)
+      end do
+   end if
+   
 end do
 
 nCells = nNewCells
@@ -612,7 +766,7 @@ else
 end if
 do i = 1, nCells
    do n = 1, 4                ! over all dircetions (neighbors)
-      if (cells(i) % neigh(n) == 0) cycle
+      if (cells(i) % neigh(n) == NO_CELL) cycle
       ni = cells(i) % neigh(n)    ! neighbor index
       nn = n + mod(n,2)*2-1       ! neighbor Direction
       if (n == 1) then
@@ -675,10 +829,12 @@ do i = 1, nCells
           abs(p1(2) - np1(2)) > EPSI .or. &
           abs(p2(1) - np2(1)) > EPSI .or. &
           abs(p2(2) - np2(2)) > EPSI ) then
-         write(*,*) "Nieghbor Connection is wrong",cells(i) % refineLevel, cells(ni) % refineLevel
-         write(*,*) "      MyCell:",i, "Neighbor:",n, cells(i) % neigh
+         write(*,*) "Neighbor Connection is wrong"
+         write(*,*) "Connection from",i,"to",ni,"Direction", n
+         write(*,*) "Refinement Level",cells(i) % refineLevel, cells(ni) % refineLevel
+         write(*,*) "      MyCell:",i, "Neighbor:",cells(i) % neigh
          write(*,*) p1, p2
-         write(*,*) "NeighborCell:",ni,"Neighbor:",nn,cells(ni) % neigh
+         write(*,*) "NeighborCell:",ni,"Neighbor:",cells(ni) % neigh
          write(*,*) np1,np2
          write(*,*) nCells
          stop 1
