@@ -26,8 +26,8 @@ use refinement
 use grid_metrics
 use choose
 implicit none
-integer         , parameter         :: MAXCELLS = 100000
-integer         , parameter         :: MAXPNTS  = 200000
+integer         , parameter         :: MAXCELLS = 2000
+integer         , parameter         :: MAXPNTS  = 4000
 character(len=*),parameter          :: FILENAME_IN = "sol.dat"
 integer                             :: nCells
 integer                             :: nParentCells
@@ -43,6 +43,9 @@ integer, allocatable                :: canCoarseList(:)   ! List all the Cells(p
 integer                             :: nCanCoarse
 integer, allocatable                :: doCoarseList(:)   ! List all Cells(Cell[first child]) to coarse
 integer                             :: nDoCoarse
+
+integer, allocatable                :: holesParentCells(:)   ! List of Holes in ParentCellsArray
+integer                             :: nHolesParentCellHoles
 
 integer                             :: iter,n
 real(kind = 8)                      :: r
@@ -64,9 +67,11 @@ allocate (refineList(MAXCELLS))
 allocate (refineType(MAXCELLS))
 allocate (canCoarseList(MAXCELLS))
 allocate (doCoarseList(MAXCELLS))
+allocate (holesParentCells(MAXCELLS))
 nCanCoarse = 0
+nHolesParentCellHoles = 0
 
-do iter = 1,8
+do iter = 1,20
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
    do n = 1, nCells
       r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
@@ -91,9 +96,9 @@ do iter = 1,8
                      ,refineType,refineList,nRefine                     &
                      ,canCoarseList,nCanCoarse                          &
                      ,doCoarseList,nDoCoarse                            &
+                     ,holesParentCells,nHolesParentCellHoles            &
                      ,.false.)
    call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
-   write(*,*) "Coarseable Cells:",canCoarseList(1:nCanCoarse)
 end do
 do n = 1, nCells
    r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)

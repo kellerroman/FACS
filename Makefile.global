@@ -1,7 +1,7 @@
 FC=gfortran
 #FC=ifort
 
-DEBUG ?= 0
+DEBUG ?= 1
 
 OBJECT_DIR=obj
 EXECUTABLE_DIR=bin
@@ -23,7 +23,9 @@ ifneq (,$(findstring $(FC),gfortran))
       FFLAGS += -O3
       #FFLAGS += -fopenmp
    else
-      FFLAGS += -g -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check
+      FFLAGS += -O0 -g -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check
+      FFLAGS +=  -Wline-truncation -Wcharacter-truncation -Wsurprising -Waliasing -Wimplicit-interface -Wunused-parameter
+      FFLAGS += -fwhole-file  -pedantic  
    endif
 endif
 

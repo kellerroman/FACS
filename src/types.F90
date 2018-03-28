@@ -39,9 +39,9 @@ type :: tParentCell
    integer                                :: ref
    integer                                :: neigh(4)
    integer                                :: cut_type ! 0 = Not Cut
-                                                      ! 1 = Cut in i and j 
-                                                      ! 2 = Cut in i
-                                                      ! 3 = Cut in j
+                                                      ! 1 = Cut in i
+                                                      ! 2 = Cut in j
+                                                      ! 3 = Cut in i and j 
    integer                                :: pos_CanCoarse   ! Position in the CanCoarse List
    !real(kind = 8)                         :: var
    !real(kind = 8)                         :: center(2)

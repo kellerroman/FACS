@@ -1,4 +1,5 @@
 module choose
+   use const
    use types
 implicit none
 logical, parameter :: DO_MULTI_DIM_REFINEMENT = .false.
@@ -115,6 +116,7 @@ do i = 1, nCanCoarse
       ! check if coarsing is not possible due to:
       do n = 1, 4
          nc = cells(cc) % neigh(n)
+         if (nc == NO_CELL) cycle
          !  1 Neighbor cell is finer
          if (cells(nc) % refineLevel(1) > cells(cc) % refineLevel(1) .or. &
              cells(nc) % refineLevel(2) > cells(cc) % refineLevel(2)) then
@@ -137,8 +139,8 @@ do i = 1, nCanCoarse
       c = parentCells(cc) % ref
       nDoCoarse = nDoCoarse + 1
       doCoarseList(nDoCoarse) = c
-      write(*,*) "Combined:",c,"ParentCell:",cc,"ParentsParent:",pc, nDoCoarse
-      write(*,*) cells(c) % neigh
+      !write(*,*) "Combined:",c,"ParentCell:",cc,"ParentsParent:",pc, nDoCoarse, parentCells(pc) % pos_CanCoarse,i
+      !write(*,*) cells(c) % neigh
    end if
 end do
 end subroutine
