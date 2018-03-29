@@ -5,7 +5,7 @@ subroutine doRefinement (cells,parentCells,pnts,nCells,nParentCells,nPnts  &
                         ,refineType,refineList,nRefine                     &
                         ,canCoarseList,nCanCoarse                          &
                         ,doCoarseList,nDoCoarse                            &
-                        ,holesParentCekks,nHolesParentCellHoles            &
+                        ,holesParentCells,nHolesParentCellHoles            &
                         ,debug_in)
 use types
 implicit none
@@ -25,7 +25,7 @@ integer       , intent (inout)            :: nCanCoarse
 integer       , intent (inout)            :: doCoarseList(:)
 integer       , intent (in)               :: nDoCoarse
 
-integer       , intent (inout)            :: holesParentCekks(:)
+integer       , intent (inout)            :: holesParentCells(:)
 integer       , intent (inout)            :: nHolesParentCellHoles
 
 logical       , intent (in), optional     :: debug_in
@@ -240,6 +240,60 @@ do ci = 1, nIntervall
    end do
 end do
 
+! **************************************************************************************************
+!           
+!                COARSENING IN BOTH DIRECTIONS
+!           
+! **************************************************************************************************
+do r = 1, nDoCoarse
+   ctr = doCoarseList(r)
+   oc = CellId_old2new(ctr)
+   cells(oc) % center(:) = 0.25d0 * ( pnts(:,cells(oc) % pnts(1)) & 
+                                    + pnts(:,cells(oc) % pnts(2)) & 
+                                    + pnts(:,cells(oc) % pnts(3)) & 
+                                    + pnts(:,cells(oc) % pnts(4)) ) 
+   npc1 = cells(oc) % ref  ! ParentCell Equivalent
+   opc  = parentCells(npc1) % parent ! Parent of the Cell, which will be new reference
+   npc2 = parentCells(opc) % parent
+   do i = 1, 4
+      nHolesParentCellHoles = nHolesParentCellHoles + 1
+      holesParentCells(nHolesParentCellHoles) = parentCells(opc) % child(i)
+   end do
+   parentCells(opc) % child = NO_CELL
+   parentCells(opc) % ref   = oc
+   cells(oc) % ref          = opc
+    
+   ! delete old parent cell from refinement
+   ! If parent exist, the parent maybe can be added to the list avoiding
+   ! deleting the entry
+   if (npc2 /= NO_CELL) then
+      found = .true.
+      do i = 1,4
+         if (parentCells(parentCells(npc2) % child(i)) % child(1) /= NO_CELL) then
+            found = .false.
+            exit
+         end if
+      end do
+   else
+      found = .false.
+   end if
+
+   ! if parent has other children with children or doesnt exist, entry must be
+   ! deleted
+   ci = parentCells(opc) % pos_CanCoarse
+   parentCells(opc) % pos_CanCoarse = NO_CELL
+   if (found) then
+      canCoarseList(ci) = npc2
+      parentCells(npc2) % pos_CanCoarse = ci
+   else
+      nCanCoarse = nCanCoarse - 1
+      do i = ci, nCanCoarse
+         canCoarseList(i) = canCoarseList(i+1)
+         parentCells(canCoarseList(i)) % pos_CanCoarse = i
+      end do
+   end if
+   
+end do
 do r = 1, nRefine
    ctr = refineList(r)
    oc = CellId_old2new(ctr)
@@ -638,11 +692,35 @@ do r = 1, nRefine
 
       ! Parent Cell
 
-      npc1 = nParentCells + 1
-      npc2 = nParentCells + 2
-      npc3 = nParentCells + 3
-      npc4 = nParentCells + 4
-      nParentCells = npc4
+      if (nHolesParentCellHoles > 0) then
+         npc1 = holesParentCells(nHolesParentCellHoles) 
+         nHolesParentCellHoles = nHolesParentCellHoles - 1
+      else
+         nParentCells = nParentCells + 1
+         npc1 = nParentCells
+      end if
+         
+      if (nHolesParentCellHoles > 0) then
+         npc2 = holesParentCells(nHolesParentCellHoles) 
+         nHolesParentCellHoles = nHolesParentCellHoles - 1
+      else
+         nParentCells = nParentCells + 1
+         npc2 = nParentCells
+      end if
+      if (nHolesParentCellHoles > 0) then
+         npc3 = holesParentCells(nHolesParentCellHoles) 
+         nHolesParentCellHoles = nHolesParentCellHoles - 1
+      else
+         nParentCells = nParentCells + 1
+         npc3 = nParentCells
+      end if
+      if (nHolesParentCellHoles > 0) then
+         npc4 = holesParentCells(nHolesParentCellHoles) 
+         nHolesParentCellHoles = nHolesParentCellHoles - 1
+      else
+         nParentCells = nParentCells + 1
+         npc4 = nParentCells
+      end if
       opc = cells(oc) % ref                      ! old parent cell
       parentCells(opc) % ref = NO_CELL                ! Cell has childs, thus no tin cells array anymore
       parentCells(opc) % cut_type = 3
@@ -718,55 +796,6 @@ do r = 1, nRefine
    end if
 end do
 
-do r = 1, nDoCoarse
-   ctr = doCoarseList(r)
-   oc = CellId_old2new(ctr)
-   cells(oc) % center(:) = 0.25d0 * ( pnts(:,cells(oc) % pnts(1)) & 
-                                    + pnts(:,cells(oc) % pnts(2)) & 
-                                    + pnts(:,cells(oc) % pnts(3)) & 
-                                    + pnts(:,cells(oc) % pnts(4)) ) 
-   npc1 = cells(oc) % ref  ! ParentCell Equivalent
-   opc  = parentCells(npc1) % parent ! Parent of the Cell, which will be new reference
-   npc2 = parentCells(opc) % parent
-   do i = 1, 4
-      nHolesParentCellHoles = nHolesParentCellHoles + 1
-      holesParentCekks(nHolesParentCellHoles) = parentCells(opc) % child(i)
-   end do
-   parentCells(opc) % child = NO_CELL
-   parentCells(opc) % ref   = oc
-   cells(oc) % ref          = opc
-    
-   ! delete old parent cell from refinement
-   ! If parent exist, the parent maybe can be added to the list avoiding
-   ! deleting the entry
-   if (npc2 /= NO_CELL) then
-      found = .true.
-      do i = 1,4
-         if (parentCells(parentCells(npc2) % child(i)) % child(1) /= NO_CELL) then
-            found = .false.
-            exit
-         end if
-      end do
-   else
-      found = .false.
-   end if
-
-   ! if parent has other children with children or doesnt exist, entry must be
-   ! deleted
-   ci = parentCells(opc) % pos_CanCoarse
-   parentCells(opc) % pos_CanCoarse = NO_CELL
-   if (found) then
-      canCoarseList(ci) = npc2
-      parentCells(npc2) % pos_CanCoarse = ci
-   else
-      nCanCoarse = nCanCoarse - 1
-      do i = ci, nCanCoarse
-         canCoarseList(i) = canCoarseList(i+1)
-         parentCells(canCoarseList(i)) % pos_CanCoarse = i
-      end do
-   end if
-   
-end do
 
 write(*,'("Number of ParentHoles : ",I0)') nHolesParentCellHoles
 nCells = nNewCells

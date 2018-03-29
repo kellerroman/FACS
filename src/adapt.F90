@@ -71,7 +71,7 @@ allocate (holesParentCells(MAXCELLS))
 nCanCoarse = 0
 nHolesParentCellHoles = 0
 
-do iter = 1,20
+do iter = 1,50
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
    do n = 1, nCells
       r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
