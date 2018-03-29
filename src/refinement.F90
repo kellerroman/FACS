@@ -76,9 +76,9 @@ nMaxCells = ubound(cells,1)
 nMaxParentCells = ubound(parentCells,1)
 nMaxPnts  = ubound(pnts,2)
 
-nNewPnts        = nPnts        + 5 * (nRefine - nDoCoarse)
+nNewPnts        = nPnts        + 5 * nRefine !(nRefine - nDoCoarse)
 nNewCells       = nCells       + 3 * (nRefine - nDoCoarse)
-nNewParentCells = nParentCells + 4 * nRefine !(nRefine - nDoCoarse)
+nNewParentCells = nParentCells + 4 * (nRefine - nDoCoarse)
 
 write(*,'("Number of Refinements : ",I0)') nRefine
 write(*,'("Number of Coarsenings : ",I0)') nDoCoarse

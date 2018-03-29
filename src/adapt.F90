@@ -26,8 +26,8 @@ use refinement
 use grid_metrics
 use choose
 implicit none
-integer         , parameter         :: MAXCELLS = 2000
-integer         , parameter         :: MAXPNTS  = 4000
+integer         , parameter         :: MAXCELLS = 20000
+integer         , parameter         :: MAXPNTS  = 400000
 character(len=*),parameter          :: FILENAME_IN = "sol.dat"
 integer                             :: nCells
 integer                             :: nParentCells
@@ -76,16 +76,16 @@ do iter = 1,50
    do n = 1, nCells
       r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
       cells(n) % var = tanh(4.0d0* (2.0d0*r-1.0d0))*0.5d0 + 0.5d0
-!      if (r > 0.3d0 + iter*0.02d0) then
-!         cells(n) % var = 0
-!      else
-!         cells(n) % var = 1
-!      end if
-      if (cells(n) % center(1) > 0.1d0 + iter*0.02d0) then
+      if (r > 0.3d0 + iter*0.025) then
          cells(n) % var = 0
       else
          cells(n) % var = 1
       end if
+!      if (cells(n) % center(1) > 0.1d0 + iter*0.02d0) then
+!         cells(n) % var = 0
+!      else
+!         cells(n) % var = 1
+!      end if
    end do
    call calc_gradient(cells,nCells)
    call choose_cells(cells,nCells,refineType,refineList,nRefine)

@@ -3,6 +3,7 @@ module choose
    use types
 implicit none
 logical, parameter :: DO_MULTI_DIM_REFINEMENT = .false.
+real(kind = 8), parameter :: GRAD_MIN_COARSE = 1.00D-10
 real(kind = 8) :: grad_ref = 110.0d-2
 real(kind = 8) :: grad_coa =  10.0d-2
 real(kind = 8) :: grad_avg
@@ -18,18 +19,20 @@ integer       , intent (out)              :: refineType(:)
 integer       , intent (out)              :: refineList(:)
 integer       , intent (out)              :: nRefine
 integer                                   :: i
-real(kind = 8)                            :: loc_max_grad
+real(kind = 8)                            :: min_grad, max_grad
 
 nRefine = 0
 refineType = 0 
+max_grad =                     grad_ref * grad_avg
+min_grad = max(GRAD_MIN_COARSE,grad_ref * grad_avg)
 do i = 1, nCells
    if (DO_MULTI_DIM_REFINEMENT) then
-      if ( abs(Cells(i) % grad(1)) > grad_ref*grad_avg) then
+      if ( abs(Cells(i) % grad(1)) > max_grad) then
          nRefine = nRefine + 1
          refineList(nRefine) = i
          refineType(i) = 1
       end if
-      if ( abs(Cells(i) % grad(2)) > grad_ref*grad_avg) then
+      if ( abs(Cells(i) % grad(2)) > max_grad) then
          if (refineType(i) == 0) then
             nRefine = nRefine + 1
             refineList(nRefine) = i
@@ -39,14 +42,13 @@ do i = 1, nCells
          end if
       end if
    else
-      loc_max_grad = maxval(abs(cells(i) % grad))
-      if ( abs(cells(i) % grad(1)) > grad_ref*grad_avg .or. &
-           abs(cells(i) % grad(2)) > grad_ref*grad_avg) then
+      if ( abs(cells(i) % grad(1)) > max_grad .or. &
+           abs(cells(i) % grad(2)) > max_grad) then
          nRefine = nRefine + 1
          refineList(nRefine) = i
          refineType(i) = 3
-      else if ( abs(cells(i) % grad(1)) < grad_coa*grad_avg .and. &
-                abs(cells(i) % grad(2)) < grad_coa*grad_avg) then
+      else if ( abs(cells(i) % grad(1)) < min_grad .and. &
+                abs(cells(i) % grad(2)) < min_grad) then
          refineType(i) = -3
       end if
    end if
