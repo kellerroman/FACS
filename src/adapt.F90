@@ -26,8 +26,9 @@ use refinement
 use grid_metrics
 use choose
 implicit none
-integer         , parameter         :: MAXCELLS = 20000
+integer         , parameter         :: MAXCELLS = 200000
 integer         , parameter         :: MAXPNTS  = 400000
+integer         , parameter         :: MAXLIST = MAXCELLS / 10
 character(len=*),parameter          :: FILENAME_IN = "sol.dat"
 integer                             :: nCells
 integer                             :: nParentCells
@@ -45,7 +46,10 @@ integer, allocatable                :: doCoarseList(:)   ! List all Cells(Cell[f
 integer                             :: nDoCoarse
 
 integer, allocatable                :: holesParentCells(:)   ! List of Holes in ParentCellsArray
-integer                             :: nHolesParentCellHoles
+integer                             :: nHolesParentCell
+
+integer, allocatable                :: holesPnts(:)   ! List of Holes in Point Array
+integer                             :: nHolesPnt
 
 integer                             :: iter,n
 real(kind = 8)                      :: r
@@ -63,20 +67,23 @@ allocate (pnts(2,MAXPNTS))
 
 call read_sol(cells,parentCells,pnts,nCells,nParentCells,nPnts,FILENAME_IN)
 call calc_center(cells,pnts,nCells)
-allocate (refineList(MAXCELLS))
-allocate (refineType(MAXCELLS))
-allocate (canCoarseList(MAXCELLS))
-allocate (doCoarseList(MAXCELLS))
-allocate (holesParentCells(MAXCELLS))
-nCanCoarse = 0
-nHolesParentCellHoles = 0
+allocate (refineList       (MAXLIST))
+allocate (refineType       (MAXCELLS))
+allocate (canCoarseList    (MAXCELLS))
+allocate (doCoarseList     (MAXLIST))
+allocate (holesParentCells (MAXCELLS))
+allocate (holesPnts        (MAXPNTS))
+nCanCoarse        = 0
+nHolesParentCell  = 0
+nHolesPnt         = 0
 
-do iter = 1,50
+do iter = 1,200
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
    do n = 1, nCells
       r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
       cells(n) % var = tanh(4.0d0* (2.0d0*r-1.0d0))*0.5d0 + 0.5d0
-      if (r > 0.3d0 + iter*0.025) then
+      if (r > 0.5d0 + 0.4d0 * sin(dble(iter)/50.0d0* 3.12d0) &
+                    + 0.1d0 * cos(dble(iter)/10.0d0* 3.12d0)) then
          cells(n) % var = 0
       else
          cells(n) % var = 1
@@ -96,7 +103,8 @@ do iter = 1,50
                      ,refineType,refineList,nRefine                     &
                      ,canCoarseList,nCanCoarse                          &
                      ,doCoarseList,nDoCoarse                            &
-                     ,holesParentCells,nHolesParentCellHoles            &
+                     ,holesParentCells,nHolesParentCell                 &
+                     ,holesPnts,nHolesPnt                               &
                      ,.false.)
    call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
 end do

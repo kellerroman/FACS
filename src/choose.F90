@@ -28,25 +28,31 @@ min_grad = max(GRAD_MIN_COARSE,grad_ref * grad_avg)
 do i = 1, nCells
    if (DO_MULTI_DIM_REFINEMENT) then
       if ( abs(Cells(i) % grad(1)) > max_grad) then
-         nRefine = nRefine + 1
-         refineList(nRefine) = i
-         refineType(i) = 1
-      end if
-      if ( abs(Cells(i) % grad(2)) > max_grad) then
-         if (refineType(i) == 0) then
+         if (cells(i) % refineLevel(1) < MAX_REF_LEVEL) then
             nRefine = nRefine + 1
             refineList(nRefine) = i
-            refineType(i) = 2
-         else
-            refineType(i) = 3
+            refineType(i) = 1
+         end if
+      end if
+      if ( abs(Cells(i) % grad(2)) > max_grad) then
+         if (cells(i) % refineLevel(2) < MAX_REF_LEVEL) then
+            if (refineType(i) == 0) then
+               nRefine = nRefine + 1
+               refineList(nRefine) = i
+               refineType(i) = 2
+            else
+               refineType(i) = 3
+            end if
          end if
       end if
    else
       if ( abs(cells(i) % grad(1)) > max_grad .or. &
            abs(cells(i) % grad(2)) > max_grad) then
-         nRefine = nRefine + 1
-         refineList(nRefine) = i
-         refineType(i) = 3
+         if (cells(i) % refineLevel(1) < MAX_REF_LEVEL) then
+            nRefine = nRefine + 1
+            refineList(nRefine) = i
+            refineType(i) = 3
+         end if
       else if ( abs(cells(i) % grad(1)) < min_grad .and. &
                 abs(cells(i) % grad(2)) < min_grad) then
          refineType(i) = -3

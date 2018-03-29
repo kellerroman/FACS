@@ -1,13 +1,16 @@
 module refinement
 use const
+use types
+implicit none
+
 contains
 subroutine doRefinement (cells,parentCells,pnts,nCells,nParentCells,nPnts  &
                         ,refineType,refineList,nRefine                     &
                         ,canCoarseList,nCanCoarse                          &
                         ,doCoarseList,nDoCoarse                            &
-                        ,holesParentCells,nHolesParentCellHoles            &
+                        ,holesParentCells,nHolesParentCell                 &
+                        ,holesPnts       ,nHolesPnt                        &
                         ,debug_in)
-use types
 implicit none
 type(tCell)   , intent (inout)            :: cells(:)
 type(tParentCell)   , intent (inout)      :: parentCells(:)
@@ -26,7 +29,10 @@ integer       , intent (inout)            :: doCoarseList(:)
 integer       , intent (in)               :: nDoCoarse
 
 integer       , intent (inout)            :: holesParentCells(:)
-integer       , intent (inout)            :: nHolesParentCellHoles
+integer       , intent (inout)            :: nHolesParentCell             
+
+integer       , intent (inout)            :: holesPnts(:)
+integer       , intent (inout)            :: nHolesPnt             
 
 logical       , intent (in), optional     :: debug_in
 
@@ -52,6 +58,7 @@ integer, allocatable                      :: intervall_dms(:)
 integer                                   :: i,r,ctr,nc,oc,nc1,nc2,nc3
 integer                                   :: opc,npc1,npc2,npc3,npc4              ! New Parent cells
 integer                                   :: rfl,nrfl
+integer                                   :: p(5)
 
 logical                                   :: found
 logical                                   :: debug
@@ -76,15 +83,10 @@ nMaxCells = ubound(cells,1)
 nMaxParentCells = ubound(parentCells,1)
 nMaxPnts  = ubound(pnts,2)
 
-nNewPnts        = nPnts        + 5 * nRefine !(nRefine - nDoCoarse)
+nNewPnts        = nPnts        + 5 * (nRefine - nDoCoarse)
 nNewCells       = nCells       + 3 * (nRefine - nDoCoarse)
 nNewParentCells = nParentCells + 4 * (nRefine - nDoCoarse)
 
-write(*,'("Number of Refinements : ",I0)') nRefine
-write(*,'("Number of Coarsenings : ",I0)') nDoCoarse
-write(*,'("Number of New Cells   : ",I0)') nNewCells
-write(*,'("Number of New ParCells: ",I0)') nNewParentCells
-write(*,'("Number of New Points  : ",I0)') nNewPnts
 
 if (nNewCells > nMaxCells) then
    write(*,*) "Maximum number of Cells reached"
@@ -168,6 +170,13 @@ do i = 2, nIntervall
       cells(nc) % pnts(2)  = cells(nc+2) % pnts(2) 
       cells(nc) % pnts(3)  = cells(nc+3) % pnts(3) 
       cells(nc) % refineLevel = cells(nc) % refineLevel - 1
+
+      nHolesPnt = nHolesPnt + 5
+      holesPnts(nHolesPnt-4)= cells(nc+1) % pnts(2) 
+      holesPnts(nHolesPnt-3)= cells(nc+1) % pnts(3) 
+      holesPnts(nHolesPnt-2)= cells(nc+1) % pnts(4) 
+      holesPnts(nHolesPnt-1)= cells(nc+3) % pnts(2) 
+      holesPnts(nHolesPnt  )= cells(nc+3) % pnts(4) 
 
       ! Since Cells are ignored in the intervalls, the newId must be set here to
       ! the surviving child new position
@@ -256,8 +265,8 @@ do r = 1, nDoCoarse
    opc  = parentCells(npc1) % parent ! Parent of the Cell, which will be new reference
    npc2 = parentCells(opc) % parent
    do i = 1, 4
-      nHolesParentCellHoles = nHolesParentCellHoles + 1
-      holesParentCells(nHolesParentCellHoles) = parentCells(opc) % child(i)
+      nHolesParentCell = nHolesParentCell + 1
+      holesParentCells(nHolesParentCell) = parentCells(opc) % child(i)
    end do
    parentCells(opc) % child = NO_CELL
    parentCells(opc) % ref   = oc
@@ -315,34 +324,42 @@ do r = 1, nRefine
             cells(cells(oc) % neigh(nc)) % refineLevel(2),nc=1,4)
       end if
       !
-      !          ______-1______
+      !          ______P4______
       !         |       |      |
       !         |  OC   |  NC3 |          OC Original Cell
       !         |       |      |          NC1 NEW Cell
-      !      -4 |_______|______|-3        NC2 NEW Cell
-      !         |      0|      |          NC3 NEW Cell
+      !      P1 |_______|______|P2        NC2 NEW Cell
+      !         |      P5      |          NC3 NEW Cell
       !         |  NC1  |  NC2 |
       !         |       |      |
       !         |_______|______|
-      !                -2 
+      !                P3 
       !        
       if (debug) write(*,*) "Refining Cell in both Dirs:", ctr, oc
       !!!!  ADD NEW POINTS
-      nPnts = nPnts + 1
-      Pnts(:,nPnts) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(4)) ) * 0.5d0
-      if (debug) write(*,*) "New Point:", nPnts, Pnts(:,nPnts)
-      nPnts = nPnts + 1
-      Pnts(:,nPnts) = ( Pnts(:,cells(oc) % pnts(2)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
-      if (debug) write(*,*) "New Point:", nPnts,Pnts(:,nPnts)
-      nPnts = nPnts + 1
-      Pnts(:,nPnts) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(2)) ) * 0.5d0
-      if (debug) write(*,*) "New Point:", nPnts, Pnts(:,nPnts)
-      nPnts = nPnts + 1
-      Pnts(:,nPnts) = ( Pnts(:,cells(oc) % pnts(4)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
-      if (debug) write(*,*) "New Point:", nPnts,Pnts(:,nPnts)
-      nPnts = nPnts + 1
-      Pnts(:,nPnts) = cells(oc) % center(:)
-      if (debug) write(*,*) "New Point:", nPnts,Pnts(:,nPnts)
+      do i = 1, 5
+         if (nHolesPnt > 0) then
+            p(i) = holesPnts(nHolesPnt) 
+            nHolesPnt = nHolesPnt - 1
+         else
+            nPnts = nPnts + 1
+            p(i) = nPnts
+         end if
+         select case(i)
+            case(1)
+               Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(4)) ) * 0.5d0
+            case(2)
+               Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(2)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
+            case(3)
+               Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(2)) ) * 0.5d0
+            case(4)
+               Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(4)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
+            case(5)
+               Pnts(:,p(i)) = cells(oc) % center(:)
+         end select
+         if (debug) write(*,*) "New Point:", p(i), Pnts(:,p(i))
+      end do
+
       !do nc = 1,4
       !   if (cells(cells(oc) % neigh(nc) ) % refineLevel(1) < cells(oc) % refineLevel(1)) then
       !      write(*,*) "CEll",oc,"is connected to",cells(oc) % neigh(nc), nc
@@ -352,9 +369,9 @@ do r = 1, nRefine
       cells(oc) % refineLevel(:) = cells(oc) % refineLevel(:) + 1
       !! UPDATE NEW CELL
       cells(nc1) % pnts(1) = cells(oc) % pnts(1)
-      cells(nc1) % pnts(2) = nPnts - 2
-      cells(nc1) % pnts(3) = nPnts
-      cells(nc1) % pnts(4) = nPnts - 4
+      cells(nc1) % pnts(2) = p(3)
+      cells(nc1) % pnts(3) = p(5)
+      cells(nc1) % pnts(4) = p(1)
       cells(nc1) % refineLevel(:) = cells(oc) % refineLevel(:)
 
       ! neighbor LEFT
@@ -460,10 +477,10 @@ do r = 1, nRefine
 
       !! UPDATE NEW CELL
 
-      cells(nc2) % pnts(1) = nPnts - 2
+      cells(nc2) % pnts(1) = p(3)
       cells(nc2) % pnts(2) = cells(oc) % pnts(2)
-      cells(nc2) % pnts(3) = nPnts - 3
-      cells(nc2) % pnts(4) = nPnts
+      cells(nc2) % pnts(3) = p(2)
+      cells(nc2) % pnts(4) = p(5)
       cells(nc2) % refineLevel(:) = cells(oc) % refineLevel(:)
       !Neighbor LEFT
       cells(nc2) % neigh(1) = nc1
@@ -582,10 +599,10 @@ do r = 1, nRefine
       if (debug) write(*,*) nc2,"setting north neighbor to", nc3
 
       !! UPDATE NEW CELL NORTH RIGHT
-      cells(nc3) % pnts(1) = nPnts
-      cells(nc3) % pnts(2) = nPnts - 3
+      cells(nc3) % pnts(1) = p(5)
+      cells(nc3) % pnts(2) = p(2)
       cells(nc3) % pnts(3) = cells(oc) % pnts(3)
-      cells(nc3) % pnts(4) = nPnts - 1
+      cells(nc3) % pnts(4) = p(4)
       cells(nc3) % refineLevel(:) = cells(oc) % refineLevel(:)
       cells(nc3) % neigh(1) = oc
       if (debug) write(*,*) nc3,"setting left neighbor to", oc
@@ -675,9 +692,9 @@ do r = 1, nRefine
          if (debug) write(*,*) nc3,"setting north neighbor to", nc
       end if
       !!! UPDATE REFINED CELL
-      cells(oc) % pnts(1) = nPnts - 4
-      cells(oc) % pnts(2) = nPnts
-      cells(oc) % pnts(3) = nPnts - 1
+      cells(oc) % pnts(1) = p(1)
+      cells(oc) % pnts(2) = p(5)
+      cells(oc) % pnts(3) = p(4)
       cells(oc) % neigh(2) = nc3
       cells(oc) % neigh(3) = nc1
 
@@ -692,31 +709,31 @@ do r = 1, nRefine
 
       ! Parent Cell
 
-      if (nHolesParentCellHoles > 0) then
-         npc1 = holesParentCells(nHolesParentCellHoles) 
-         nHolesParentCellHoles = nHolesParentCellHoles - 1
+      if (nHolesParentCell > 0) then
+         npc1 = holesParentCells(nHolesParentCell) 
+         nHolesParentCell = nHolesParentCell - 1
       else
          nParentCells = nParentCells + 1
          npc1 = nParentCells
       end if
          
-      if (nHolesParentCellHoles > 0) then
-         npc2 = holesParentCells(nHolesParentCellHoles) 
-         nHolesParentCellHoles = nHolesParentCellHoles - 1
+      if (nHolesParentCell > 0) then
+         npc2 = holesParentCells(nHolesParentCell) 
+         nHolesParentCell = nHolesParentCell - 1
       else
          nParentCells = nParentCells + 1
          npc2 = nParentCells
       end if
-      if (nHolesParentCellHoles > 0) then
-         npc3 = holesParentCells(nHolesParentCellHoles) 
-         nHolesParentCellHoles = nHolesParentCellHoles - 1
+      if (nHolesParentCell > 0) then
+         npc3 = holesParentCells(nHolesParentCell) 
+         nHolesParentCell = nHolesParentCell - 1
       else
          nParentCells = nParentCells + 1
          npc3 = nParentCells
       end if
-      if (nHolesParentCellHoles > 0) then
-         npc4 = holesParentCells(nHolesParentCellHoles) 
-         nHolesParentCellHoles = nHolesParentCellHoles - 1
+      if (nHolesParentCell > 0) then
+         npc4 = holesParentCells(nHolesParentCell) 
+         nHolesParentCell = nHolesParentCell - 1
       else
          nParentCells = nParentCells + 1
          npc4 = nParentCells
@@ -796,13 +813,16 @@ do r = 1, nRefine
    end if
 end do
 
-
-write(*,'("Number of ParentHoles : ",I0)') nHolesParentCellHoles
+write(*,'("Number of Refine/Coarse              : ",I0,"/",I0)') nRefine,nDoCoarse
+write(*,'("Number of Cells/Parents/Points       : ",I0,2("/",I0))') nNewCells &
+                                                                  , nParentCells - nHolesParentCell &
+                                                                  , nPnts - nHolesPnt
+write(*,'("Arraysize req Cells/Parents/Points   : ",I0,2("/",I0))') nNewCells,nParentCells, nPnts
+write(*,'("Number of Holes Parent/Pnt           : ",I0,"/",I0)') nHolesParentCell,nHolesPnt
 nCells = nNewCells
 end subroutine doRefinement
 
 subroutine check_neighbors (cells,nCells,pnts,debug_in)
-use types
 implicit none
 real(kind = 8), parameter                 :: EPSI = 1.0D-10
 type(tCell)   , intent (inout)            :: cells(:)
