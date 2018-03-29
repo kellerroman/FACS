@@ -45,7 +45,7 @@ write(*,'("Grid contains ",I0," Cells and ",I0," Points")') nCells, nPnts
 do i = 1, nCells
    center = 0.25d0 * ( pnts(1,cells(i) % pnts(1)) + pnts(1,cells(i) % pnts(2)) &
                      + pnts(1,cells(i) % pnts(3)) + pnts(1,cells(i) % pnts(4)))
-   write(fo,*) center,cells(i) % refineLevel(1), cells(i) % var, cells(i) % grad
+   write(fo,*) center,cells(i) % refineLevel(1), cells(i) % Q, cells(i) % grad
 end do
 
 close(fo)

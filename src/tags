@@ -4,15 +4,23 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
+AUSM	fluxes.F90	/^ subroutine AUSM(/;"	s	module:fluxes
 DO_MULTI_DIM_REFINEMENT	choose.F90	/^logical, parameter :: DO_MULTI_DIM_REFINEMENT /;"	v	module:choose
 FACES	const.F90	/^character(len=1), parameter :: FACES(/;"	v	module:const
 FILENAME_IN	adapt.F90	/^character(len=*),parameter          :: FILENAME_IN /;"	v	program:adapt
 GRAD_MIN_COARSE	choose.F90	/^real(kind = 8), parameter :: GRAD_MIN_COARSE /;"	v	module:choose
+HLL	fluxes.F90	/^ function HLL(/;"	f	module:fluxes
 MAXCELLS	adapt.F90	/^integer         , parameter         :: MAXCELLS /;"	v	program:adapt
 MAXLIST	adapt.F90	/^integer         , parameter         :: MAXLIST /;"	v	program:adapt
 MAXPNTS	adapt.F90	/^integer         , parameter         :: MAXPNTS /;"	v	program:adapt
 MAX_REF_LEVEL	const.F90	/^integer, parameter                        :: MAX_REF_LEVEL /;"	v	module:const
+Q	types.F90	/^   real(kind = 8)                         :: Q(/;"	k	type:tCell
+QC	types.F90	/^   real(kind = 8)                         :: QC(/;"	k	type:tCell
+Q_DIM	const.F90	/^integer, parameter                        :: Q_DIM /;"	v	module:const
+Roe	fluxes.F90	/^ function Roe(/;"	f	module:fluxes
+WHICH_FLUX	fluxes.F90	/^   integer, parameter :: WHICH_FLUX /;"	v	module:fluxes
 adapt	adapt.F90	/^program adapt$/;"	p
+aux	types.F90	/^   real(kind = 8)                         :: aux(/;"	k	type:tCell
 calc_center	grid_metrics.F90	/^subroutine calc_center(/;"	s	module:grid_metrics
 calc_gradient	choose.F90	/^subroutine calc_gradient(/;"	s	module:choose
 canCoarseList	adapt.F90	/^integer, allocatable                :: canCoarseList(/;"	v	program:adapt
@@ -27,17 +35,23 @@ const	const.F90	/^module const$/;"	m
 cut_type	types.F90	/^   integer                                :: cut_type /;"	k	type:tParentCell
 doCoarseList	adapt.F90	/^integer, allocatable                :: doCoarseList(/;"	v	program:adapt
 doRefinement	refinement.F90	/^subroutine doRefinement /;"	s	module:refinement
+dt	adapt.F90	/^real(kind=8) :: fl(Q_DIM) ,fr(Q_DIM),dt$/;"	v	program:adapt
 file_io	file_io.F90	/^module file_io$/;"	m
+fl	adapt.F90	/^real(kind=8) :: fl(/;"	v	program:adapt
+fluxes	fluxes.F90	/^module fluxes$/;"	m
+fr	adapt.F90	/^real(kind=8) :: fl(Q_DIM) ,fr(/;"	v	program:adapt
 grad	types.F90	/^   real(kind = 8)                         :: grad(/;"	k	type:tCell
-grad_avg	choose.F90	/^real(kind = 8) :: grad_avg$/;"	v	module:choose
+grad_avg	choose.F90	/^real(kind = 8) :: grad_avg(/;"	v	module:choose
 grad_coa	choose.F90	/^real(kind = 8) :: grad_coa /;"	v	module:choose
-grad_max	choose.F90	/^real(kind = 8) :: grad_max$/;"	v	module:choose
-grad_min	choose.F90	/^real(kind = 8) :: grad_min$/;"	v	module:choose
+grad_max	choose.F90	/^real(kind = 8) :: grad_max(/;"	v	module:choose
+grad_min	choose.F90	/^real(kind = 8) :: grad_min(/;"	v	module:choose
 grad_ref	choose.F90	/^real(kind = 8) :: grad_ref /;"	v	module:choose
 grid_metrics	grid_metrics.F90	/^module grid_metrics$/;"	m
 holesParentCells	adapt.F90	/^integer, allocatable                :: holesParentCells(/;"	v	program:adapt
 holesPnts	adapt.F90	/^integer, allocatable                :: holesPnts(/;"	v	program:adapt
+inv_flux	fluxes.F90	/^subroutine inv_flux(/;"	s	module:fluxes
 iter	adapt.F90	/^integer                             :: iter,/;"	v	program:adapt
+lax_friedrich_i	fluxes.F90	/^subroutine lax_friedrich_i(/;"	s	module:fluxes
 n	adapt.F90	/^int/;"	v	program:adapt
 nCanCoarse	adapt.F90	/^integer                             :: nCanCoarse$/;"	v	program:adapt
 nCells	adapt.F90	/^integer                             :: nCells$/;"	v	program:adapt
@@ -49,13 +63,14 @@ nPnts	adapt.F90	/^integer                             :: nPnts$/;"	v	program:ada
 nRefine	adapt.F90	/^integer                             :: nRefine$/;"	v	program:adapt
 neigh	types.F90	/^   integer                                :: neigh(/;"	k	type:tCell
 neigh	types.F90	/^   integer                                :: neigh(/;"	k	type:tParentCell
+niter	adapt.F90	/^integer                             :: niter$/;"	v	program:adapt
 parent	types.F90	/^   integer                                :: parent$/;"	k	type:tParentCell
 parentCells	adapt.F90	/^type(tParentCell), allocatable      :: parentCells(/;"	v	program:adapt
+physical_flux	fluxes.F90	/^ function physical_flux(/;"	f	module:fluxes
 pnts	adapt.F90	/^real(kind = 8), allocatable         :: pnts(/;"	v	program:adapt
 pnts	types.F90	/^   integer                                :: pnts(/;"	k	type:tCell
 pnts	types.F90	/^   integer                                :: pnts(/;"	k	type:tParentCell
 pos_CanCoarse	types.F90	/^   integer                                :: pos_CanCoarse /;"	k	type:tParentCell
-r	adapt.F90	/^re/;"	v	program:adapt
 read_sol	file_io.F90	/^subroutine read_sol(/;"	s	module:file_io
 ref	types.F90	/^   integer                                :: ref$/;"	k	type:tCell
 ref	types.F90	/^   integer                                :: ref$/;"	k	type:tParentCell
@@ -68,5 +83,4 @@ smooth_refinement	choose.F90	/^subroutine smooth_refinement(/;"	s	module:choose
 tCell	types.F90	/^type :: tCell$/;"	t	module:types
 tParentCell	types.F90	/^type :: tParentCell$/;"	t	module:types
 types	types.F90	/^module types$/;"	m
-var	types.F90	/^   real(kind = 8)                         :: var$/;"	k	type:tCell
 write_sol	file_io.F90	/^subroutine write_sol(/;"	s	module:file_io

@@ -37,11 +37,10 @@ implicit none
 character(len=*), parameter         :: FILENAME = "sol.dat"
 
 
-integer                             :: ni = 11
-integer                             :: nj = 2
+integer                             :: ni = 1000
+integer                             :: nj = 1
 
 real(kind = 8)                      :: xmax = 1.0D-0
-real(kind = 8)                      :: ymax = 1.0D-1
 
 type(tCell), allocatable            :: cells(:)
 real(kind = 8), allocatable         :: pnts(:,:)
@@ -56,6 +55,9 @@ real(kind = 8)                      :: dx,dy
 
 write(*,'(A)') "Gridgen for SOD SHOCK TUBE"
 
+ni = ni + 1
+nj = nj + 1
+
 nCells = (ni-1) * (nj-1)
 nPnts  =  ni    *  nj
  
@@ -65,7 +67,7 @@ allocate (cells(nCells))
 allocate (pnts(2,nPnts))
 
 dx = xmax / dble(ni-1)
-dy = ymax / dble(nj-1)
+dy = dx
 
 n = 0
 do j = 0, nj-1
@@ -86,7 +88,14 @@ do j = 1, nj-1
       cells(n) % pnts(4) = i1+ni
       cells(n) % refineLevel = 0
       dy = dx * dble(i-1+0.5)
-      cells(n) % var = tanh(4.0d0* (2.0d0*dy-xmax))*0.5d0 + 0.5d0
+      cells(n) % Q(2:3) = 0.0d0
+      if ( i < ni / 2) then
+         cells(n) % Q(1) = 1.0d0
+         cells(n) % Q(3) = 1.0d0 / 0.4d0
+      else
+         cells(n) % Q(1) = 0.1d0
+         cells(n) % Q(3) = 0.1d0 / 0.4d0
+      end if
    end do
 end do
 

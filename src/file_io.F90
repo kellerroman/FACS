@@ -22,9 +22,13 @@ integer                                            :: fi
 
 open(newunit = fi,file=trim(filename))
 
-read(fi,'(I9,1X,I9)') nCells, nPnts
+read(fi,'(I9,1X,I9,1X,I3)') nCells, nPnts, i
 write(*,'("Grid contains ",I0," Cells and ",I0," Points")') nCells, nPnts
 
+if (i /= Q_DIM) then
+   write(*,*) "Solution File contains different StateVector Size"
+   stop 1
+end if
 if (.not. allocated(cells)) then
    allocate(cells(nCells))
 else
@@ -71,7 +75,7 @@ do i = 1, nCells
 end do
 
 do i = 1, nCells
-   read (fi,'(10X,1(1X,ES12.5))') cells(i) % var
+   read (fi,'(10X,1(1X,ES12.5))') cells(i) % Q
 end do
 
 do i = 1, nCells
@@ -109,7 +113,7 @@ else
    open(newunit = fi,file=trim(filename))
 end if
 
-write(fi,'(I9,",",I9)') nCells, nPnts
+write(fi,'(I9,",",I9,1X,I3)') nCells, nPnts, Q_DIM
 
 do i = 1, nPnts
       write (fi,'(I9,":",3(1X,ES12.5))') i , pnts(:,i)
@@ -124,7 +128,7 @@ do i = 1, nCells
    write (fi,'(I9,":",2(1X,I9))') i,cells(i) % refineLevel
 end do
 do i = 1, nCells
-   write (fi,'(I9,":",1(1X,ES12.5))') i,cells(i) % var
+   write (fi,'(I9,":",1(1X,ES12.5))') i,cells(i) % Q
 end do
 do i = 1, nCells
    write (fi,'(I9,":",2(1X,ES12.5))') i,cells(i) % grad

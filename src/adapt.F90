@@ -25,6 +25,7 @@ use file_io
 use refinement
 use grid_metrics
 use choose
+use fluxes
 implicit none
 integer         , parameter         :: MAXCELLS = 200000
 integer         , parameter         :: MAXPNTS  = 400000
@@ -52,7 +53,11 @@ integer, allocatable                :: holesPnts(:)   ! List of Holes in Point A
 integer                             :: nHolesPnt
 
 integer                             :: iter,n
-real(kind = 8)                      :: r
+
+integer                             :: niter
+
+real(kind=8) :: fl(Q_DIM) ,fr(Q_DIM),dt
+real(kind=8),allocatable :: qt(:,:)
 
 write(*,'(90("="))') 
 write(*,'(90("="))') 
@@ -60,58 +65,74 @@ write(*,'( 3("="),10X,A)') "Grid Adapter"
 write(*,'(90("="))') 
 write(*,'(90("="))') 
 
+niter = 1000
+dt = 0.1 / dble(niter)
+! dt = dt / dx
+
 allocate (cells(MAXCELLS))
 allocate (parentCells(MAXCELLS))
 allocate (pnts(2,MAXPNTS))
 
-call read_sol(cells,parentCells,pnts,nCells,nParentCells,nPnts,FILENAME_IN)
-call calc_center(cells,pnts,nCells)
 allocate (refineList       (MAXLIST))
 allocate (refineType       (MAXCELLS))
 allocate (canCoarseList    (MAXCELLS))
 allocate (doCoarseList     (MAXLIST))
 allocate (holesParentCells (MAXCELLS))
 allocate (holesPnts        (MAXPNTS))
+nRefine           = 0
+nDoCoarse         = 0
 nCanCoarse        = 0
 nHolesParentCell  = 0
 nHolesPnt         = 0
 
-do iter = 1,200
-   write(*,'(10("="),3X,I5.5,3X,10("="))') iter
-   do n = 1, nCells
-      r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
-      !r = cells(n) % center(1)
-      !cells(n) % var = tanh(4.0d0* (2.0d0*r-1.0d0))*0.5d0 + 0.5d0
-!         cells(n) % var = 0.5d0 + 0.4d0 * sin(dble(iter)/50.0d0* 3.12d0) &
-!                                * cos(dble(iter)/10.0d0* 3.12d0)         &
-!                                * sin(r/0.5d0*3.12d0)
-      if (r > 0.5d0 + 0.4d0 * sin(dble(iter)/50.0d0* 3.12d0) &
-                    + 0.1d0 * cos(dble(iter)/10.0d0* 3.12d0)) then
-         cells(n) % var = 0
-      else
-         cells(n) % var = 1
-      end if
-!      if (cells(n) % center(1) > 0.1d0 + iter*0.02d0) then
-!         cells(n) % var = 0
-!      else
-!         cells(n) % var = 1
-!      end if
-   end do
-   call calc_gradient(cells,nCells)
-   call choose_cells(cells,nCells,refineType,refineList,nRefine)
-   call smooth_refinement(cells,refineType,refineList,nRefine)
-   call choose_coarse(cells,parentCells,refineType,canCoarseList,nCanCoarse,doCoarseList,nDoCoarse)
+call read_sol(cells,parentCells,pnts,nCells,nParentCells,nPnts,FILENAME_IN)
+call calc_center(cells,pnts,nCells)
 
-   call doRefinement (cells,parentCells,pnts,nCells,nParentCells,nPnts  &
-                     ,refineType,refineList,nRefine                     &
-                     ,canCoarseList,nCanCoarse                          &
-                     ,doCoarseList,nDoCoarse                            &
-                     ,holesParentCells,nHolesParentCell                 &
-                     ,holesPnts,nHolesPnt                               &
-                     ,.false.)
-   call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
+dt = dt / (1.0d0 / dble(ncells)) 
+do n = 1, nCells
+   cells(n) % QC(1)       = cells(n) % Q(1)
+   cells(n) % QC(2:Q_DIM) = cells(n) % Q(1) * cells(n) % Q(2:Q_DIM)
+end do
+do iter = 1,2!niter
+   write(*,'(10("="),3X,I5.5,3X,10("="))') iter
+   allocate(qt(Q_DIM,nCells))
+   do n = 1, nCells
+      if (cells(n) % neigh(1) /= NO_CELL) then
+         call inv_flux(cells(cells(n) % neigh(1)) % QC, cells(n) % QC,dt, fl)
+      else 
+         call inv_flux(cells(n) % QC, cells(n) % QC, dt, fl)
+         !fl = 0.0d0
+      end if
+      if (cells(n) % neigh(2) /= NO_CELL) then
+         call inv_flux(cells(n) % QC, cells(cells(n) % neigh(2)) % QC,dt, fr)
+      else 
+         call inv_flux(cells(n) % QC, cells(n) % QC, dt, fr)
+         !fr = 0.0d0
+      end if
+      qt(:,n)  = cells(n) % QC + dt * (fl-fr)
+   end do
+   do n = 2, nCells-1
+      cells(n) % qc(:)      = qt(:,n)
+      cells(n) % q(1)       = qt(1,n)
+      cells(n) % Q(2:Q_DIM) = qt(2:Q_DIM,n) / qt(1,n) 
+   end do
+   deallocate(qt)
+!   call calc_gradient(cells,nCells)
+!   call choose_cells(cells,nCells,refineType,refineList,nRefine)
+!   call smooth_refinement(cells,refineType,refineList,nRefine)
+!   call choose_coarse(cells,parentCells,refineType,canCoarseList,nCanCoarse,doCoarseList,nDoCoarse)
+!
+!   call doRefinement (cells,parentCells,pnts,nCells,nParentCells,nPnts  &
+!                     ,refineType,refineList,nRefine                     &
+!                     ,canCoarseList,nCanCoarse                          &
+!                     ,doCoarseList,nDoCoarse                            &
+!                     ,holesParentCells,nHolesParentCell                 &
+!                     ,holesPnts,nHolesPnt                               &
+!                     ,.false.)
+!   call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
 end do
 call check_neighbors(cells,nCells,pnts)
+call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN)
 
 write(*,'(90("="))') 
 write(*,'(90("="))') 

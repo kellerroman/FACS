@@ -6,9 +6,9 @@ logical, parameter :: DO_MULTI_DIM_REFINEMENT = .false.
 real(kind = 8), parameter :: GRAD_MIN_COARSE = 1.00D-10
 real(kind = 8) :: grad_ref = 110.0d-2
 real(kind = 8) :: grad_coa =  10.0d-2
-real(kind = 8) :: grad_avg
-real(kind = 8) :: grad_max
-real(kind = 8) :: grad_min
+real(kind = 8) :: grad_avg(Q_DIM)
+real(kind = 8) :: grad_max(Q_DIM)
+real(kind = 8) :: grad_min(Q_DIM)
 
 contains
 subroutine choose_cells(cells,nCells,refineType,refineList,nRefine)
@@ -23,18 +23,18 @@ real(kind = 8)                            :: min_grad, max_grad
 
 nRefine = 0
 refineType = 0 
-max_grad =                     grad_ref * grad_avg
-min_grad = max(GRAD_MIN_COARSE,grad_ref * grad_avg)
+max_grad =                     grad_ref * grad_avg(1)
+min_grad = max(GRAD_MIN_COARSE,grad_ref * grad_avg(1))
 do i = 1, nCells
    if (DO_MULTI_DIM_REFINEMENT) then
-      if ( abs(Cells(i) % grad(1)) > max_grad) then
+      if ( abs(Cells(i) % grad(1,1)) > max_grad) then
          if (cells(i) % refineLevel(1) < MAX_REF_LEVEL) then
             nRefine = nRefine + 1
             refineList(nRefine) = i
             refineType(i) = 1
          end if
       end if
-      if ( abs(Cells(i) % grad(2)) > max_grad) then
+      if ( abs(Cells(i) % grad(2,1)) > max_grad) then
          if (cells(i) % refineLevel(2) < MAX_REF_LEVEL) then
             if (refineType(i) == 0) then
                nRefine = nRefine + 1
@@ -46,15 +46,15 @@ do i = 1, nCells
          end if
       end if
    else
-      if ( abs(cells(i) % grad(1)) > max_grad .or. &
-           abs(cells(i) % grad(2)) > max_grad) then
+      if ( abs(cells(i) % grad(1,1)) > max_grad .or. &
+           abs(cells(i) % grad(2,1)) > max_grad) then
          if (cells(i) % refineLevel(1) < MAX_REF_LEVEL) then
             nRefine = nRefine + 1
             refineList(nRefine) = i
             refineType(i) = 3
          end if
-      else if ( abs(cells(i) % grad(1)) < min_grad .and. &
-                abs(cells(i) % grad(2)) < min_grad) then
+      else if ( abs(cells(i) % grad(1,1)) < min_grad .and. &
+                abs(cells(i) % grad(2,1)) < min_grad) then
          refineType(i) = -3
       end if
    end if
@@ -161,7 +161,7 @@ integer       , intent (in)            :: nCells
 
 integer                                   :: i
 integer                                   :: nl,nh    ! Heighbor LOW and HIGH
-real(kind = 8) :: grad
+real(kind = 8) :: grad(Q_DIM)
 
 grad_avg = 0.0d0
 grad_min = 1.0D20
@@ -171,18 +171,18 @@ do i = 1, nCells
    nl = cells(i) % neigh(1)
    nh = cells(i) % neigh(2)
    if (nl /= 0 .and. nh /= 0) then
-      grad = (cells(nh) % var - cells(nl) % var) * (cells(nh) % center(1) - cells(nl) % center(1))
+      grad = (cells(nh) % Q   - cells(nl) % Q  ) * (cells(nh) % center(1) - cells(nl) % center(1))
    else if (nl == 0 .and. nh /= 0) then
-      grad = (cells(nh) % var - cells(i) % var) * (cells(nh) % center(1) - cells(i) % center(1))
+      grad = (cells(nh) % Q   - cells(i) % Q  ) * (cells(nh) % center(1) - cells(i) % center(1))
    else if (nl /= 0 .and. nh == 0) then
-      grad = (cells(i) % var - cells(nl) % var) * (cells(i) % center(1) - cells(nl) % center(1))
+      grad = (cells(i) % Q   - cells(nl) % Q  ) * (cells(i) % center(1) - cells(nl) % center(1))
    else
       write(*,*) "I-Derivative not yet supported"
       write(*,*) "cell:",i,"Neigh-Left:",nl,"Neigh-Right:",nh
       write(*,*) "neighbors:", cells(i) % neigh
       stop 1
    end if
-   cells(i) % grad(1) = grad
+   cells(i) % grad(1,:) = grad
    grad = abs(grad)
    grad_min = min(grad_min,grad)
    grad_max = max(grad_max,grad)
@@ -192,17 +192,17 @@ do i = 1, nCells
    nl = cells(i) % neigh(3)
    nh = cells(i) % neigh(4)
    if (nl /= 0 .and. nh /= 0) then
-      grad = (cells(nh) % var - cells(nl) % var) * (cells(nh) % center(2) - cells(nl) % center(2))
+      grad = (cells(nh) % Q - cells(nl) % Q) * (cells(nh) % center(2) - cells(nl) % center(2))
    else if (nl == 0 .and. nh /= 0) then
-      grad = (cells(nh) % var - cells(i) % var) * (cells(nh) % center(2) - cells(i) % center(2))
+      grad = (cells(nh) % Q - cells(i) % Q) * (cells(nh) % center(2) - cells(i) % center(2))
    else if (nl /= 0 .and. nh == 0) then
-      grad = (cells(i) % var - cells(nl) % var) * (cells(i) % center(2) - cells(nl) % center(2))
+      grad = (cells(i) % Q - cells(nl) % Q) * (cells(i) % center(2) - cells(nl) % center(2))
    else
       !write(*,*) "J-Derivative not yet supported",i,nl,nh
       grad = 0
 !      stop 1
    end if
-   cells(i) % grad(2) = grad
+   cells(i) % grad(2,:) = grad
    grad = abs(grad)
    grad_min = min(grad_min,grad)
    grad_max = max(grad_max,grad)

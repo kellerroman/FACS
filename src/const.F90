@@ -2,6 +2,7 @@ module const
 implicit none
 
 integer, parameter                        :: MAX_REF_LEVEL = 7
+integer, parameter                        :: Q_DIM = 3
 character(len=1), parameter :: FACES(6) = ["L","R","S","N","F","B"]
 
 integer         , parameter :: LEFT     = 1

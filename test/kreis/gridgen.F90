@@ -87,7 +87,7 @@ do j = 1, nj-1
       cells(n) % pnts(3) = i1+ni+1
       cells(n) % pnts(4) = i1+ni
       cells(n) % refineLevel = 0
-      cells(n) % var = 1.0d0
+      cells(n) % Q       = 1.0d0
    end do
 end do
 

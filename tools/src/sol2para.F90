@@ -92,64 +92,87 @@ write(fo,*)
 !end do
 
 write(fo,"(A,1X,I0)") "CELL_DATA",nCells
-write(fo,"(A)") 'SCALARS Refinement_Level_I int'
+!write(fo,"(A)") 'SCALARS Refinement_Level_I int'
+!write(fo,"(A)") 'LOOKUP_TABLE Default'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % refineLevel(1)
+!end do
+!
+!write(fo,"(A)") 'SCALARS Refinement_Level_J int'
+!write(fo,"(A)") 'LOOKUP_TABLE Default'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % refineLevel(2)
+!end do
+!
+!write(fo,"(A)") 'SCALARS Cell_Number int'
+!write(fo,"(A)") 'LOOKUP_TABLE Default'
+!do i = 1, nCells
+!   write(fo,*) i
+!end do
+!
+!write(fo,"(A)") 'SCALARS Neighbor_1_LEFT int'
+!write(fo,"(A)") 'LOOKUP_TABLE Default'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % neigh(1)
+!end do
+!
+!write(fo,"(A)") 'SCALARS Neighbor_2_RIGHT int'
+!write(fo,"(A)") 'LOOKUP_TABLE Default'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % neigh(2)
+!end do
+!
+!write(fo,"(A)") 'SCALARS Neighbor_3_SOUTH int'
+!write(fo,"(A)") 'LOOKUP_TABLE Default'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % neigh(3)
+!end do
+!
+!write(fo,"(A)") 'SCALARS Neighbor_4_NORTH int'
+!write(fo,"(A)") 'LOOKUP_TABLE Default'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % neigh(4)
+!end do
+
+write(fo,"(A)") 'SCALARS Density double'
 write(fo,"(A)") 'LOOKUP_TABLE Default'
 do i = 1, nCells
-   write(fo,*) cells(i) % refineLevel(1)
+   write(fo,*) cells(i) % Q(1)
 end do
 
-write(fo,"(A)") 'SCALARS Refinement_Level_J int'
+!write(fo,"(A)") 'VECTORS Velocity double'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % Q(2:3)
+!end do
+
+write(fo,"(A)") 'SCALARS VelX double'
 write(fo,"(A)") 'LOOKUP_TABLE Default'
 do i = 1, nCells
-   write(fo,*) cells(i) % refineLevel(2)
+   write(fo,*) cells(i) % Q(2)
 end do
 
-write(fo,"(A)") 'SCALARS Cell_Number int'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) i
-end do
+!write(fo,"(A)") 'SCALARS VelY double'
+!write(fo,"(A)") 'LOOKUP_TABLE Default'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % Q(3)
+!end do
 
-write(fo,"(A)") 'SCALARS Neighbor_1_LEFT int'
+write(fo,"(A)") 'SCALARS Energy double'
 write(fo,"(A)") 'LOOKUP_TABLE Default'
 do i = 1, nCells
-   write(fo,*) cells(i) % neigh(1)
-end do
-
-write(fo,"(A)") 'SCALARS Neighbor_2_RIGHT int'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % neigh(2)
-end do
-
-write(fo,"(A)") 'SCALARS Neighbor_3_SOUTH int'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % neigh(3)
-end do
-
-write(fo,"(A)") 'SCALARS Neighbor_4_NORTH int'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % neigh(4)
-end do
-
-write(fo,"(A)") 'SCALARS Var double'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % var
+   write(fo,*) cells(i) % Q(3)
 end do
 
 write(fo,"(A)") 'SCALARS GradX double'
 write(fo,"(A)") 'LOOKUP_TABLE Default'
 do i = 1, nCells
-   write(fo,*) cells(i) % grad(1)
+   write(fo,*) cells(i) % grad(1,1)
 end do
 
 write(fo,"(A)") 'SCALARS GradY double'
 write(fo,"(A)") 'LOOKUP_TABLE Default'
 do i = 1, nCells
-   write(fo,*) cells(i) % grad(2)
+   write(fo,*) cells(i) % grad(2,1)
 end do
 
 close(fo)

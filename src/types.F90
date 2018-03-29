@@ -1,4 +1,6 @@
 module types
+use const
+implicit none
 type :: tCell
 ! **************************************************************************************************
 !  Point ordering              Neighbors
@@ -15,9 +17,11 @@ type :: tCell
    integer                                :: neigh(4)
    integer                                :: refineLevel(2)
    integer                                :: ref
-   real(kind = 8)                         :: var
+   real(kind = 8)                         :: Q(Q_DIM)
+   real(kind = 8)                         :: QC(Q_DIM)
+   real(kind = 8)                         :: aux(4)
    real(kind = 8)                         :: center(2)
-   real(kind = 8)                         :: grad(2)
+   real(kind = 8)                         :: grad(2,Q_DIM)
 
 end type tCell
 type :: tParentCell
@@ -43,7 +47,6 @@ type :: tParentCell
                                                       ! 2 = Cut in j
                                                       ! 3 = Cut in i and j 
    integer                                :: pos_CanCoarse   ! Position in the CanCoarse List
-   !real(kind = 8)                         :: var
    !real(kind = 8)                         :: center(2)
    !real(kind = 8)                         :: grad(2)
 

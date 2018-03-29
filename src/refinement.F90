@@ -170,7 +170,15 @@ do i = 2, nIntervall
       cells(nc) % pnts(2)  = cells(nc+2) % pnts(2) 
       cells(nc) % pnts(3)  = cells(nc+3) % pnts(3) 
       cells(nc) % refineLevel = cells(nc) % refineLevel - 1
+      cells(nc) % Q = 0.25d0 * ( cells(nc  ) % Q &
+                               + cells(nc+1) % Q &
+                               + cells(nc+2) % Q &
+                               + cells(nc+3) % Q )
 
+      cells(nc) % QC = 0.25d0 * ( cells(nc  ) % QC &
+                                + cells(nc+1) % QC &
+                                + cells(nc+2) % QC &
+                                + cells(nc+3) % QC )
       nHolesPnt = nHolesPnt + 5
       holesPnts(nHolesPnt-4)= cells(nc+1) % pnts(2) 
       holesPnts(nHolesPnt-3)= cells(nc+1) % pnts(3) 
@@ -703,7 +711,8 @@ do r = 1, nRefine
                                           + pnts(:,cells(nc) % pnts(2)) & 
                                           + pnts(:,cells(nc) % pnts(3)) & 
                                           + pnts(:,cells(nc) % pnts(4)) ) 
-         cells(nc) % var       = cells(oc) % var
+         cells(nc) % Q         = cells(oc) % Q  
+         cells(nc) % QC        = cells(oc) % QC
          cells(nc) % grad      = cells(oc) % grad
       end do
 

@@ -7,5 +7,6 @@ fort.*
 gridgen
 *.dat
 *.vtk
+*.csv
 inc_Makefile_*
 .*.swp
