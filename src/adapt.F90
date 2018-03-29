@@ -56,8 +56,7 @@ real(kind = 8)                      :: r
 
 write(*,'(90("="))') 
 write(*,'(90("="))') 
-write(*,'(3("="),10X,A)') "Grid Adapter"
-
+write(*,'( 3("="),10X,A)') "Grid Adapter"
 write(*,'(90("="))') 
 write(*,'(90("="))') 
 
@@ -81,7 +80,11 @@ do iter = 1,200
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
    do n = 1, nCells
       r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
-      cells(n) % var = tanh(4.0d0* (2.0d0*r-1.0d0))*0.5d0 + 0.5d0
+      !r = cells(n) % center(1)
+      !cells(n) % var = tanh(4.0d0* (2.0d0*r-1.0d0))*0.5d0 + 0.5d0
+!         cells(n) % var = 0.5d0 + 0.4d0 * sin(dble(iter)/50.0d0* 3.12d0) &
+!                                * cos(dble(iter)/10.0d0* 3.12d0)         &
+!                                * sin(r/0.5d0*3.12d0)
       if (r > 0.5d0 + 0.4d0 * sin(dble(iter)/50.0d0* 3.12d0) &
                     + 0.1d0 * cos(dble(iter)/10.0d0* 3.12d0)) then
          cells(n) % var = 0
@@ -108,19 +111,11 @@ do iter = 1,200
                      ,.false.)
    call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
 end do
-do n = 1, nCells
-   r = sqrt(cells(n) % center(1)**2 + cells(n) % center(2) **2)
-   cells(n) % var = tanh(4.0d0* (2.0d0*r-1.0d0))*0.5d0 + 0.5d0
-end do
 call check_neighbors(cells,nCells,pnts)
-!call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN)
 
-do n = 1, nCells
-   write(666,*) n, cells(n) % neigh
-end do
 write(*,'(90("="))') 
 write(*,'(90("="))') 
-write(*,'(3("="),10X,A)') "Grid Adapter done!"
+write(*,'( 3("="),10X,A)') "Grid Adapter done!"
 write(*,'(90("="))') 
 write(*,'(90("="))') 
 end program adapt

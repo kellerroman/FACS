@@ -20,7 +20,7 @@ run: gridgen
 	@$(HOMEDIR)/tools/bin/sol2para
 
 clean:
-	rm -f *.dat *.vtk gridgen *.mod fort.*
+	@rm -f *.dat *.vtk gridgen *.mod fort.*
 test:
-	mv sol.dat sol_00000.dat
+	@mv sol.dat sol_00000.dat
 	for i in sol_*.dat; do ../../tools/bin/sol2para $$i $${i%dat}vtk; done

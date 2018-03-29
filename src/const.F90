@@ -1,7 +1,7 @@
 module const
 implicit none
 
-integer, parameter                        :: MAX_REF_LEVEL = 6
+integer, parameter                        :: MAX_REF_LEVEL = 7
 character(len=1), parameter :: FACES(6) = ["L","R","S","N","F","B"]
 
 integer         , parameter :: LEFT     = 1
