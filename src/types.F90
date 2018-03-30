@@ -17,11 +17,16 @@ type :: tCell
    integer                                :: neigh(4)
    integer                                :: refineLevel(2)
    integer                                :: ref
-   real(kind = 8)                         :: Q(Q_DIM)
-   real(kind = 8)                         :: QC(Q_DIM)
+   real(kind = 8)                         :: q(Q_DIM)
+   real(kind = 8)                         :: qc(Q_DIM)
    real(kind = 8)                         :: aux(4)
    real(kind = 8)                         :: center(2)
    real(kind = 8)                         :: grad(2,Q_DIM)
+   real(kind = 8)                         :: vol                     ! Inverse of the Volume/Area of the Cell
+   integer                                :: nFace                   ! Number of Fluxes the Cell has 
+   integer                                :: faces(GIT_DIM*2*2)      ! Dimension of grid * 2 (for 2 neighbor Cells per Side)
+                                                                     !                   * 2 (for both sides)
+   real(kind = 8)                         :: f_sign(GIT_DIM*2*2)     ! Sign of each Flux of the cell face
 
 end type tCell
 type :: tParentCell
@@ -51,4 +56,11 @@ type :: tParentCell
    !real(kind = 8)                         :: grad(2)
 
 end type tParentCell
+type :: tFace
+   integer                                :: stencil(1,2)
+   real(kind = 8)                         :: q_const(Q_DIM,2)     ! Reconstructed Value at Cell Interface
+   real(kind = 8)                         :: n(GIT_DIM)           ! Normal Vector of the Face
+   real(kind = 8)                         :: area                 ! length / Area of the Face
+   real(kind = 8)                         :: flux(Q_DIM)          ! Flux in the Face
+end type tFace
 end module types

@@ -26,10 +26,8 @@ character(len=100)                  :: filename_in = "sol.dat"
 character(len=100)                  :: filename_pv = "sol.csv"
 
 type(tCell), allocatable            :: cells(:)
-type(tParentCell), allocatable            :: parentCells(:)
 real(kind = 8), allocatable         :: pnts(:,:)
 integer                             :: nCells
-integer                             :: nParentCells
 integer                             :: nPnts
 
 integer                             :: fo
@@ -50,7 +48,7 @@ DO
    i = i+1
 END DO
 
-call read_sol(cells,parentCells,pnts,nCells,nParentCells,nPnts,FILENAME_IN)
+call read_sol(filename_in,cells,pnts,nCells,nPnts)
 
 open(newunit = fo,file=trim(filename_pv))
 write(fo,'(A15)',ADVANCE="NO") "X"

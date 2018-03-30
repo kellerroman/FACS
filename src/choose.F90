@@ -2,8 +2,11 @@ module choose
    use const
    use types
 implicit none
-logical, parameter :: DO_MULTI_DIM_REFINEMENT = .false.
+logical       , parameter :: DO_MULTI_DIM_REFINEMENT = .false.
+integer       , parameter :: REFINEMENT_ENTRY = 1
 real(kind = 8), parameter :: GRAD_MIN_COARSE = 1.00D-10
+
+
 real(kind = 8) :: grad_ref = 110.0d-2
 real(kind = 8) :: grad_coa =  10.0d-2
 real(kind = 8) :: grad_avg(Q_DIM)
@@ -23,18 +26,18 @@ real(kind = 8)                            :: min_grad, max_grad
 
 nRefine = 0
 refineType = 0 
-max_grad =                     grad_ref * grad_avg(1)
-min_grad = max(GRAD_MIN_COARSE,grad_ref * grad_avg(1))
+max_grad =                     grad_ref * grad_avg(REFINEMENT_ENTRY)
+min_grad = max(GRAD_MIN_COARSE,grad_ref * grad_avg(REFINEMENT_ENTRY))
 do i = 1, nCells
    if (DO_MULTI_DIM_REFINEMENT) then
-      if ( abs(Cells(i) % grad(1,1)) > max_grad) then
+      if ( abs(Cells(i) % grad(1,REFINEMENT_ENTRY)) > max_grad) then
          if (cells(i) % refineLevel(1) < MAX_REF_LEVEL) then
             nRefine = nRefine + 1
             refineList(nRefine) = i
             refineType(i) = 1
          end if
       end if
-      if ( abs(Cells(i) % grad(2,1)) > max_grad) then
+      if ( abs(Cells(i) % grad(2,REFINEMENT_ENTRY)) > max_grad) then
          if (cells(i) % refineLevel(2) < MAX_REF_LEVEL) then
             if (refineType(i) == 0) then
                nRefine = nRefine + 1
@@ -46,15 +49,15 @@ do i = 1, nCells
          end if
       end if
    else
-      if ( abs(cells(i) % grad(1,1)) > max_grad .or. &
-           abs(cells(i) % grad(2,1)) > max_grad) then
+      if ( abs(cells(i) % grad(1,REFINEMENT_ENTRY)) > max_grad .or. &
+           abs(cells(i) % grad(2,REFINEMENT_ENTRY)) > max_grad) then
          if (cells(i) % refineLevel(1) < MAX_REF_LEVEL) then
             nRefine = nRefine + 1
             refineList(nRefine) = i
             refineType(i) = 3
          end if
-      else if ( abs(cells(i) % grad(1,1)) < min_grad .and. &
-                abs(cells(i) % grad(2,1)) < min_grad) then
+      else if ( abs(cells(i) % grad(1,REFINEMENT_ENTRY)) < min_grad .and. &
+                abs(cells(i) % grad(2,REFINEMENT_ENTRY)) < min_grad) then
          refineType(i) = -3
       end if
    end if

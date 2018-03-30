@@ -1,10 +1,10 @@
 program adapt
 ! **************************************************************************************************
-! ***                          RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRle                   ***
+! ***               Fully Adaptive Combustion Solver (FACS)                                      ***
 ! **************************************************************************************************
 ! Author:       Roman Keller(RK)
 ! Start date:   19.01.2018
-! Last changes: 19.01.2018
+! Last changes: 30.03.2018
 ! Version:      V0.0.1
 ! --------------------------------------------------------------------------------------------------
 ! Description:
@@ -19,11 +19,14 @@ program adapt
 ! --------------------------------------------------------------------------------------------------
 ! Author and Change History:
 !   - 2018-01-19,RK : Started of Project
+!   - 2018-03-28,RK : Grid Refining and Coarseing based on Gradient working for Refining in both 
+!                     directions at the same time
+!   - 2018-03-30,RK : 1D Euler equation working
 ! **************************************************************************************************
 use types
 use file_io
 use refinement
-use grid_metrics
+use init
 use choose
 use fluxes
 implicit none
@@ -32,18 +35,25 @@ integer         , parameter         :: MAXCELLS = 200000
 integer         , parameter         :: MAXPNTS  = 400000
 integer         , parameter         :: MAXLIST = MAXCELLS / 10
 character(len=*),parameter          :: FILENAME_IN = "sol.dat"
-integer                             :: nCells
-integer                             :: nParentCells
-integer                             :: nPnts
+
 type(tCell), allocatable            :: cells(:)
+integer                             :: nCells
+
 type(tParentCell), allocatable      :: parentCells(:)
+integer                             :: nParentCells
+
 real(kind = 8), allocatable         :: pnts(:,:)
+integer                             :: nPnts
+
 integer, allocatable                :: refineType(:)   ! Type of Refinement for each Cell (Global Cell index)
                                                        ! 1 = i-Ref, 2=j-Ref, 3 = both Ref
+
 integer, allocatable                :: refineList(:)   ! List with all the Cells to refine (nRefine Values)
 integer                             :: nRefine
+
 integer, allocatable                :: canCoarseList(:)   ! List all the Cells(parentCell) which can be coarsed
 integer                             :: nCanCoarse
+
 integer, allocatable                :: doCoarseList(:)   ! List all Cells(Cell[first child]) to coarse
 integer                             :: nDoCoarse
 
@@ -53,12 +63,14 @@ integer                             :: nHolesParentCell
 integer, allocatable                :: holesPnts(:)   ! List of Holes in Point Array
 integer                             :: nHolesPnt
 
-integer                             :: iter,n
+type(tFace), allocatable            :: faces(:)
+integer                             :: nFace
+
+integer                             :: iter,n,f
 
 integer                             :: niter
 
-real(kind=8) :: fl(Q_DIM) ,fr(Q_DIM),dt
-real(kind=8),allocatable :: qt(:,:)
+real(kind=8) :: dt,qt(Q_DIM)
 
 write(*,'(90("="))') 
 write(*,'(90("="))') 
@@ -70,11 +82,11 @@ write(*,'(90("="))')
 
 niter = 200
 dt = 0.2 / dble(niter)
-! dt = dt / dx
 
 allocate (cells(MAXCELLS))
 allocate (parentCells(MAXCELLS))
 allocate (pnts(2,MAXPNTS))
+allocate (faces(MAXCELLS ))
 
 allocate (refineList       (MAXLIST))
 allocate (refineType       (MAXCELLS))
@@ -82,45 +94,34 @@ allocate (canCoarseList    (MAXCELLS))
 allocate (doCoarseList     (MAXLIST))
 allocate (holesParentCells (MAXCELLS))
 allocate (holesPnts        (MAXPNTS))
+nFace             = 0
 nRefine           = 0
 nDoCoarse         = 0
 nCanCoarse        = 0
 nHolesParentCell  = 0
 nHolesPnt         = 0
 
-call read_sol(cells,parentCells,pnts,nCells,nParentCells,nPnts,FILENAME_IN)
-call calc_center(cells,pnts,nCells)
+call read_sol(FILENAME_IN,cells,pnts,nCells,nPnts)
 
-write(*,*) "dx", 1.0d0 / dble(ncells), "dt", dt
-dt = dt / (1.0d0 / dble(ncells)) 
-do n = 1, nCells
-   cells(n) % QC(1)       = cells(n) % Q(1)
-   cells(n) % QC(2:Q_DIM) = cells(n) % Q(1) * cells(n) % Q(2:Q_DIM)
-end do
+call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
+
 do iter = 1,niter
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
-   allocate(qt(Q_DIM,nCells))
-   do n = 1, nCells
-      if (cells(n) % neigh(1) /= NO_CELL) then
-         call inv_flux(cells(cells(n) % neigh(1)) % QC, cells(n) % QC,dt, fl)
-      else 
-         call inv_flux(cells(n) % QC, cells(n) % QC, dt, fl)
-         !fl = 0.0d0
-      end if
-      if (cells(n) % neigh(2) /= NO_CELL) then
-         call inv_flux(cells(n) % QC, cells(cells(n) % neigh(2)) % QC,dt, fr)
-      else 
-         call inv_flux(cells(n) % QC, cells(n) % QC, dt, fr)
-         !fr = 0.0d0
-      end if
-      qt(:,n)  = cells(n) % QC + dt * (fl-fr)
+   do n = 1, nFace
+      call inv_flux(cells(faces(n) % stencil(1,1)) % QC, cells(faces(n) % stencil(1,2)) % QC,dt, faces(n) % flux)
+      faces(n) % flux = faces(n) % flux * faces(n) % area
    end do
    do n = 2, nCells-1
-      cells(n) % qc(:)      = qt(:,n)
-      cells(n) % q(1)       = qt(1,n)
-      cells(n) % Q(2:Q_DIM) = qt(2:Q_DIM,n) / qt(1,n) 
+      qt = 0.0d0
+      do f = 1, cells(n) % nFace
+         qt = qt + cells(n) % f_sign(f) * faces(cells(n) % faces(f) ) % flux
+      end do
+      qt = dt * cells(n) % vol * qt + cells(n) % qc
+
+      cells(n) % qc(:)      = qt
+      cells(n) % q(1)       = qt(1)
+      cells(n) % q(2:Q_DIM) = qt(2:Q_DIM) / qt(1) 
    end do
-   deallocate(qt)
 !   call calc_gradient(cells,nCells)
 !   call choose_cells(cells,nCells,refineType,refineList,nRefine)
 !   call smooth_refinement(cells,refineType,refineList,nRefine)

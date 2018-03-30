@@ -6,12 +6,11 @@ use types
 implicit none
 contains
 
-subroutine read_sol(cells,parentCells,pnts,nCells,nParentCells,nPnts,filename)
+subroutine read_sol(filename,cells,pnts,nCells,nPnts)
 implicit none
 type(tCell)      , intent(inout), allocatable      :: cells(:)
-type(tParentCell), intent(inout), allocatable      :: parentCells(:)
 real(kind = 8)   , intent(inout), allocatable      :: pnts(:,:)
-integer          , intent(out)                     :: nCells, nParentCells, nPnts
+integer          , intent(out)                     :: nCells, nPnts
 character(len=*) , intent(in)                      :: filename
 
 integer                                            :: nMaxCells
@@ -35,15 +34,6 @@ else
    nMaxCells = ubound(cells,1)
    if (nCells > nMaxCells) then
       write(*,*) "Maximum number of Cells reached"
-      stop 1
-   end if
-end if
-if (.not. allocated(parentCells)) then
-   allocate(parentCells(nCells))
-else
-   nMaxCells = ubound(parentCells,1)
-   if (nCells > nMaxCells) then
-      write(*,*) "Maximum number of ParentCells reached"
       stop 1
    end if
 end if
@@ -82,17 +72,6 @@ do i = 1, nCells
    read (fi,'(10X,2(1X,ES12.5))') cells(i) % grad
 end do
 close(fi)
-nParentCells = nCells
-do i = 1, nParentCells
-   parentCells(i) % pnts          = cells(i) % pnts
-   parentCells(i) % neigh         = cells(i) % neigh
-   parentCells(i) % refineLevel   = cells(i) % refineLevel
-   parentCells(i) % parent        = NO_CELL 
-   parentCells(i) % child         = NO_CELL
-   cells(i) % ref                 = i
-   parentCells(i) % ref           = i
-   parentCells(i) % pos_CanCoarse = NO_CELL
-end do
 end subroutine read_sol
 
 subroutine write_sol(cells,pnts,nCells,nPnts,filename,iter)

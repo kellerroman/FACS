@@ -26,10 +26,8 @@ character(len=100)                  :: filename_in = "sol.dat"
 character(len=100)                  :: filename_pv = "paraview.vtk"
 
 type(tCell), allocatable            :: cells(:)
-type(tParentCell), allocatable      :: parentCells(:)
 real(kind = 8), allocatable         :: pnts(:,:)
 integer                             :: nCells
-integer                             :: nParentCells
 integer                             :: nPnts
 
 integer                             :: fo
@@ -49,7 +47,7 @@ DO
    i = i+1
 END DO
 
-call read_sol(cells,parentCells,pnts,ncells,nParentCells,npnts,filename_in)
+call read_sol(filename_in,cells,pnts,ncells,npnts)
 
 open(newunit = fo,file=trim(filename_pv))
 !write(*,'("Grid contains ",I0," Cells and ",I0," Points")') nCells, nPnts
@@ -92,12 +90,12 @@ write(fo,*)
 !end do
 
 write(fo,"(A,1X,I0)") "CELL_DATA",nCells
-!write(fo,"(A)") 'SCALARS Refinement_Level_I int'
-!write(fo,"(A)") 'LOOKUP_TABLE Default'
-!do i = 1, nCells
-!   write(fo,*) cells(i) % refineLevel(1)
-!end do
-!
+write(fo,"(A)") 'SCALARS Refinement_Level_I int'
+write(fo,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, nCells
+   write(fo,*) cells(i) % refineLevel(1)
+end do
+
 !write(fo,"(A)") 'SCALARS Refinement_Level_J int'
 !write(fo,"(A)") 'LOOKUP_TABLE Default'
 !do i = 1, nCells
