@@ -10,3 +10,4 @@ gridgen
 *.csv
 inc_Makefile_*
 .*.swp
+src/git_version.h

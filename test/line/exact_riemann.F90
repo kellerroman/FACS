@@ -21,7 +21,7 @@ pl   = 1.0
 ul   = 0.
 
 !..state at right of discontinuity
-rhor = 0.1
+rhor = 0.125
 pr   = 0.1
 ur   = 0.
 
@@ -37,7 +37,7 @@ gamma = 1.4
 xi = 0.5
 
 !..time at which solution is desired
-t = 0.10
+t = 0.20
 
 !..number of points in solution
 npts = 1000 
@@ -260,11 +260,10 @@ endif
 
 
 open (unit=1, file = 'exact.csv',status='unknown')
-write (1, 1000)
-1000  format (2x, 'i', 10x, 'x', 12x, 'density', 8x, 'pressure', 8x, 'velocity'/)
-1001  format (i4, 4(2x, 1pe14.7))
+write (1, '(A14,4(",",A14))') "x","rho","u","E","p"
+1001  format (1pe14.7,4(",", 1pe14.7))
 do i = 1, npts
-   write (1,1001) i, x(i), rho(i), p(i), u(i)
+   write (1,1001) x(i), rho(i), u(i), 1.0d0/(gamma-1.0d0) * (p(i) / rho(i)) + 0.5* u(i) ** 2,p(i)
 enddo
 close (1)
 stop 'normal termination'

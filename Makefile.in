@@ -3,8 +3,9 @@ include ../inc_Makefile_src
 OBJECTS=$(_SOURCES:.F90=.o)
 EXECUTABLE = ../bin/adapt
 SOURCE_DIR = ../src
-#GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 
+GIT_VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
+GIT_DATE    := $(firstword $(shell git --no-pager show --date=short --format="%ad" --name-only))
 
 compile: write $(EXECUTABLE)
 	@true
@@ -20,6 +21,13 @@ $(EXECUTABLE): $(OBJECTS)
 %.o: %.F90
 	$(FC) -c $(FFLAGS) $(INCLUDE) $< -o $@
 	
+adapt.o: $(SOURCE_DIR)/git_version.h
+
+
+$(SOURCE_DIR)/git_version.h: ../.git/COMMIT_EDITMSG ../.git/HEAD
+	@echo 'character(len=*), parameter :: GIT_VERSION = "$(GIT_VERSION)"' >$@
+	@echo 'character(len=*), parameter :: GIT_DATE    = "$(GIT_DATE)"' >>$@
+
 include ../inc_Makefile_dep
 ../inc_Makefile_src ../inc_Makefile_dep:
 	cd ../; tools/make_dependencies.py src/ 

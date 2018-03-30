@@ -27,6 +27,7 @@ use grid_metrics
 use choose
 use fluxes
 implicit none
+include "git_version.h"
 integer         , parameter         :: MAXCELLS = 200000
 integer         , parameter         :: MAXPNTS  = 400000
 integer         , parameter         :: MAXLIST = MAXCELLS / 10
@@ -62,11 +63,13 @@ real(kind=8),allocatable :: qt(:,:)
 write(*,'(90("="))') 
 write(*,'(90("="))') 
 write(*,'( 3("="),10X,A)') "Grid Adapter"
+write(*,'( 3("="),10X,A)') GIT_VERSION
+write(*,'( 3("="),10X,A)') GIT_DATE
 write(*,'(90("="))') 
 write(*,'(90("="))') 
 
-niter = 1000
-dt = 0.1 / dble(niter)
+niter = 200
+dt = 0.2 / dble(niter)
 ! dt = dt / dx
 
 allocate (cells(MAXCELLS))
@@ -88,12 +91,13 @@ nHolesPnt         = 0
 call read_sol(cells,parentCells,pnts,nCells,nParentCells,nPnts,FILENAME_IN)
 call calc_center(cells,pnts,nCells)
 
+write(*,*) "dx", 1.0d0 / dble(ncells), "dt", dt
 dt = dt / (1.0d0 / dble(ncells)) 
 do n = 1, nCells
    cells(n) % QC(1)       = cells(n) % Q(1)
    cells(n) % QC(2:Q_DIM) = cells(n) % Q(1) * cells(n) % Q(2:Q_DIM)
 end do
-do iter = 1,2!niter
+do iter = 1,niter
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
    allocate(qt(Q_DIM,nCells))
    do n = 1, nCells
@@ -129,7 +133,8 @@ do iter = 1,2!niter
 !                     ,holesParentCells,nHolesParentCell                 &
 !                     ,holesPnts,nHolesPnt                               &
 !                     ,.false.)
-!   call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
+   if (mod(iter,10) == 0) &
+   call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
 end do
 call check_neighbors(cells,nCells,pnts)
 call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN)

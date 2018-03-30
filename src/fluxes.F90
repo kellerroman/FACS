@@ -1,5 +1,5 @@
 module fluxes
-   integer, parameter :: WHICH_FLUX = 2
+   integer, parameter :: WHICH_FLUX = 1
 contains
 subroutine inv_flux(ql,qr,dt,flux)
 

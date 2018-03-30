@@ -37,7 +37,7 @@ implicit none
 character(len=*), parameter         :: FILENAME = "sol.dat"
 
 
-integer                             :: ni = 1000
+integer                             :: ni = 100
 integer                             :: nj = 1
 
 real(kind = 8)                      :: xmax = 1.0D-0
@@ -89,13 +89,14 @@ do j = 1, nj-1
       cells(n) % refineLevel = 0
       dy = dx * dble(i-1+0.5)
       cells(n) % Q(2:3) = 0.0d0
-      if ( i < ni / 2) then
+      if ( i <= int(dble(ni-1) / 2.0d0)) then
          cells(n) % Q(1) = 1.0d0
-         cells(n) % Q(3) = 1.0d0 / 0.4d0
+         cells(n) % Q(3) = 1.0d0
       else
-         cells(n) % Q(1) = 0.1d0
-         cells(n) % Q(3) = 0.1d0 / 0.4d0
+         cells(n) % Q(1) = 0.125d0
+         cells(n) % Q(3) = 0.1d0
       end if
+      cells(n) % Q(3) = 1.0d0/0.4d0 * cells(n) % Q(3) / cells(n) % Q(1) + 0.5 * cells(n) % Q(2) ** 2
    end do
 end do
 
