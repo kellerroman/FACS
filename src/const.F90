@@ -3,7 +3,7 @@ implicit none
 
 integer, parameter                        :: GIT_DIM = 2
 integer, parameter                        :: MAX_REF_LEVEL = 3
-integer, parameter                        :: Q_DIM = 3
+integer, parameter                        :: Q_DIM = 4
 character(len=1), parameter               :: FACE_NAME_SHORT(6) = ["L","R","S","N","F","B"]
 
 enum, bind(C)

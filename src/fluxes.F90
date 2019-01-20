@@ -1,125 +1,23 @@
 module fluxes
-   integer, parameter :: WHICH_FLUX = 1
+use const
+implicit none
+integer, parameter :: WHICH_FLUX = 1
 contains
-subroutine inv_flux(ql,qr,dt,flux)
+subroutine inv_flux(ql,qr,n,flux)
 
 real(kind=8), intent( in) :: QL     (:) ! Input: conservative variables
 real(kind=8), intent( in) :: QR     (:) ! Input: conservative variables
-real(kind=8), intent( in) :: dt
+real(kind=8), intent( in) :: n      (GIT_DIM)
 !Output
 real(kind=8), intent(out) :: flux  (:)        ! Output: numerical flux
 
 if (WHICH_FLUX == 1) then
-   call ausm(ql,qr,flux)
+   call ausm(ql,qr,n,flux)
 else if (WHICH_FLUX == 2) then
    call hll(ql,qr,flux)
-else if (WHICH_FLUX == 3) then
-   call central(ql,qr,flux)
-else
-   call lax_friedrich_i(ql,qr,dt,flux)
 end if
 
 end subroutine inv_flux
-
-subroutine central(QL, QR, flux)
-implicit none
-
-real(kind=8), parameter :: gamma    = 1.4d0
-real(kind=8), parameter :: one      = 1.0d0
-real(kind=8), parameter :: half     = 0.5d0
-!Input
-real(kind=8), intent( in) :: QL     (:) ! Input: conservative variables
-real(kind=8), intent( in) :: QR     (:) ! Input: conservative variables
-!Output
-real(kind=8), intent(out) :: flux  (:)        ! Output: numerical flux
-
-
-!Local variables
-!real(kind=8) :: nx, ny, nz                   ! Normal vector
-real(kind=8) :: uL, uR                       ! Velocity components.
-real(kind=8) :: rhoL, rhoR, pL, pR           ! Primitive variables.
-real(kind=8) :: qnL, qnR                     ! Normal velocities
-real(kind=8) :: aL, aR, HL, HR               ! Speed of sound, Total enthalpy
-real(kind=8) :: fL(3), fR(3)                 ! Fluxes ad dissipation term
-
-! Face normal vector (unit vector)
-!  Left state
-rhoL  = QL(1)
-uL    = QL(2) / rhoL
-qnL   = uL
-pL    = (gamma-one)*( QL(3) - half*rhoL*(uL*uL) )
-aL    = sqrt(gamma*pL/rhoL)
-HL    = (QL(3) + pL ) / rhoL
-fL(1) = rhoL*qnL
-fL(2) = rhoL*qnL * uL + pL
-fL(3) = rhoL*qnL * HL
-
-!  Right state
-rhoR  = QR(1)
-uR    = QR(2) / rhoR
-qnR   = uR
-pR    = (gamma-one)*( QR(3) - half*rhoR*(uR*uR) )
-aR    = sqrt(gamma*pR/rhoR)
-HR    = (QR(3) + pR ) / rhoR
-fR(1) = rhoR*qnR
-fR(2) = rhoR*qnR * uR + pR
-fR(3) = rhoR*qnR * HR
-flux(:)  = HALF * ( fL + fR   )
-end subroutine central
-
-
-subroutine lax_friedrich_i(QL, QR,dt, flux)
-! QL = rho * [1, u ,v , E]
-implicit none
-
-real(kind=8), parameter :: gamma    = 1.4d0
-real(kind=8), parameter :: one      = 1.0d0
-real(kind=8), parameter :: half     = 0.5d0
-!Input
-real(kind=8), intent( in) :: QL     (:) ! Input: conservative variables
-real(kind=8), intent( in) :: QR     (:) ! Input: conservative variables
-real(kind=8), intent( in) :: dt
-!Output
-real(kind=8), intent(out) :: flux  (:)        ! Output: numerical flux
-
-
-!Local variables
-!real(kind=8) :: nx, ny, nz                   ! Normal vector
-real(kind=8) :: uL, uR                       ! Velocity components.
-real(kind=8) :: rhoL, rhoR, pL, pR           ! Primitive variables.
-real(kind=8) :: qnL, qnR                     ! Normal velocities
-real(kind=8) :: aL, aR, HL, HR               ! Speed of sound, Total enthalpy
-real(kind=8) :: fL(3), fR(3)                 ! Fluxes ad dissipation term
-
-! Face normal vector (unit vector)
-!  Left state
-rhoL  = QL(1)
-uL    = QL(2) / rhoL
-qnL   = uL
-pL    = (gamma-one)*( QL(3) - half*rhoL*(uL*uL) )
-aL    = sqrt(gamma*pL/rhoL)
-HL    = (QL(3) + pL ) / rhoL
-fL(1) = rhoL*qnL
-fL(2) = rhoL*qnL * uL + pL
-fL(3) = rhoL*qnL * HL
-
-!  Right state
-rhoR  = QR(1)
-uR    = QR(2) / rhoR
-qnR   = uR
-pR    = (gamma-one)*( QR(3) - half*rhoR*(uR*uR) )
-aR    = sqrt(gamma*pR/rhoR)
-HR    = (QR(3) + pR ) / rhoR
-fR(1) = rhoR*qnR
-fR(2) = rhoR*qnR * uR + pR
-fR(3) = rhoR*qnR * HR
-flux(:)  = HALF * ( fL + fR   &
-                  - (QR-QL)/dt)
-         
-!flux(:)  = HALF * (fL + fR) &
-!         + QUARTER * (aL + aR) &
-!                   * (QL(:) + QL(:))
-end subroutine lax_friedrich_i
 
 !*****************************************************************************
 !* -- Roe's Flux Function ---
@@ -131,8 +29,8 @@ end subroutine lax_friedrich_i
 !*****************************************************************************
  function Roe(uL,uR)
  implicit none
- real :: uL(3), uR(3) !  Input (conservative variables rho*[1, v, E])
- real :: Roe(3)       ! Output (numerical flux across L and R states)
+ real :: uL(Q_DIM), uR(Q_DIM) !  Input (conservative variables rho*[1, v, E])
+ real :: Roe(Q_DIM)       ! Output (numerical flux across L and R states)
 !Local constants
  real :: gamma                        ! Ratio of specific heat.
  real :: zero, quarter, half, one, two, four
@@ -233,19 +131,26 @@ end subroutine lax_friedrich_i
 !*
 !* Katate Masatsuka, February 2009. http://www.cfdbooks.com
 !*****************************************************************************
- subroutine AUSM(uL,uR,flux)
+ subroutine AUSM(qL,qR,n,flux)
  implicit none
- real(kind=8),intent(in) :: uL(:), uR(:)  !  Input (conservative variables rho*[1, v, E])
+ real(kind=8),intent(in) :: qL(:), qR(:)  !  Input (conservative variables rho*[1, v, E])
+ real(kind=8),intent(in) :: n(2)
  real(kind=8),intent(out) :: flux(:)       ! Output (numerical flux across L and R states)
 !Local constants
  real(kind=8) :: gamma                        ! Ratio of specific heat.
  real(kind=8) :: zero, quarter, half, one, two
 !Local variables
- real(kind=8) :: rhoL, rhoR, vL, vR, pL, pR   ! Primitive variables.
+ real(kind=8) :: nx, ny                       ! Normal Vector
+ real(kind=8) :: rhoL, rhoR
+ real(kind=8) :: uL, uR
+ real(kind=8) :: vL, vR
+ real(kind=8) :: pL, pR                       ! Primitive variables.
+ real(kind=8) :: nL, nR                       ! Normal Velocitie
+ real(kind=8) :: sL, sR                       ! Speed 
  real(kind=8) :: HL, HR                       ! Specific enthaply (per unit mass).
  real(kind=8) :: aL, aR, ML, MR               ! Speeds of sound and Mach numbers.
  real(kind=8) :: Pp, Pm, Mp, Mm
- real(kind=8) :: Fp(3), Fm(3)                 ! F_plus and F_minus
+ real(kind=8) :: Fp(Q_DIM), Fm(Q_DIM)                 ! F_plus and F_minus
 
 !Constants.
      gamma = 1.4
@@ -254,22 +159,32 @@ end subroutine lax_friedrich_i
       half = 0.5
        one = 1.0
        two = 2.0
+       nx = n(1)
+       ny = n(2)
 
 !Primitive and other variables.
 !  Left state
-    rhoL = uL(1)
-      vL = uL(2)/uL(1)
-      pL = (gamma-one)*( uL(3) - half*rhoL*vL*vL )
+    rhoL = qL(1)
+      uL = qL(2)/qL(1)
+      vL = qL(3)/qL(1)
+      sL = uL * uL + vL * vL
+      nL = uL * nx + vL * ny
+      pL = (gamma-one)*( qL(4) - half*rhoL*sL )
+     !sL = sqrt(sL)
       aL = sqrt(gamma*pL/rhoL)
-      ML = vL/aL
-      HL = ( uL(3) + pL ) / rhoL
+      ML = nL/aL
+      HL = ( qL(4) + pL ) / rhoL
 !  Right state
-    rhoR = uR(1)
-      vR = uR(2)/uR(1)
-      pR = (gamma-one)*( uR(3) - half*rhoR*vR*vR )
+    rhoR = qR(1)
+      uR = qR(2)/qR(1)
+      vR = qR(3)/qR(1)
+      sR = uR * uR + vR * vR
+      nR = uR * nx + vR * ny
+      pR = (gamma-one)*( qR(4) - half*rhoR*sR )
+     !sR = sqrt(sR)
       aR = sqrt(gamma*pR/rhoR)
-      MR = vR/aR
-      HR = ( uR(3) + pR ) / rhoR
+      MR = nR/aR
+      HR = ( qR(4) + pR ) / rhoR
 
 !Positive M and p in the LEFT cell.
  if (ML <= -one) then
@@ -286,7 +201,7 @@ end subroutine lax_friedrich_i
 !Negative M and p in the RIGHT cell.
  if   (MR <= -one) then
    Mm = MR
-   Pm = PR;
+   Pm = PR
  elseif (MR < one) then
    Mm = -quarter*(MR-one)*(MR-one)
    Pm =  quarter*pR*(one-MR)*(one-MR)*(two+MR) ! or use Pm = half*(one-MR)*pR
@@ -297,15 +212,17 @@ end subroutine lax_friedrich_i
 
 !Positive Part of Flux evaluated in the left cell.
  Fp(1) = max(zero,Mp+Mm)*aL * rhoL
- Fp(2) = max(zero,Mp+Mm)*aL * rhoL*vL  + Pp
- Fp(3) = max(zero,Mp+Mm)*aL * rhoL*HL
+ Fp(2) = max(zero,Mp+Mm)*aL * rhoL*uL  + nx*Pp
+ Fp(3) = max(zero,Mp+Mm)*aL * rhoL*vL  + ny*Pp
+ Fp(4) = max(zero,Mp+Mm)*aL * rhoL*HL
 
 !Negative Part of Flux evaluated in the right cell.
  Fm(1) = min(zero,Mp+Mm)*aR * rhoR
- Fm(2) = min(zero,Mp+Mm)*aR * rhoR*vR  + Pm
- Fm(3) = min(zero,Mp+Mm)*aR * rhoR*HR
+ Fm(2) = min(zero,Mp+Mm)*aR * rhoR*uR  + nx*Pm
+ Fm(3) = min(zero,Mp+Mm)*aR * rhoR*vR  + ny*Pm
+ Fm(4) = min(zero,Mp+Mm)*aR * rhoR*HR
 
-!Compute the flux: Fp(uL)+Fm(uR).
+!Compute the flux: Fp(qL)+Fm(qR).
     flux = Fp + Fm
 
  end subroutine AUSM

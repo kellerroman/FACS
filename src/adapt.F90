@@ -66,6 +66,9 @@ integer                             :: nHolesPnt
 type(tFace), allocatable            :: faces(:)
 integer                             :: nFace
 
+integer, allocatable                :: holesFaces(:)   ! List of Holes in Point Array
+integer                             :: nHolesFace
+
 integer                             :: iter,n,f
 
 integer                             :: niter
@@ -94,12 +97,14 @@ allocate (canCoarseList    (MAXCELLS))
 allocate (doCoarseList     (MAXLIST))
 allocate (holesParentCells (MAXCELLS))
 allocate (holesPnts        (MAXPNTS))
+allocate (holesFaces       (MAXCELLS))
 nFace             = 0
 nRefine           = 0
 nDoCoarse         = 0
 nCanCoarse        = 0
 nHolesParentCell  = 0
 nHolesPnt         = 0
+nHolesFace        = 0
 
 call read_sol(FILENAME_IN,cells,pnts,nCells,nPnts)
 
@@ -108,10 +113,10 @@ call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
 do iter = 1,niter
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
    do n = 1, nFace
-      call inv_flux(cells(faces(n) % stencil(1,1)) % QC, cells(faces(n) % stencil(1,2)) % QC,dt, faces(n) % flux)
+      call inv_flux(cells(faces(n) % stencil(1,1)) % QC, cells(faces(n) % stencil(1,2)) % QC,faces(n) % n, faces(n) % flux)
       faces(n) % flux = faces(n) % flux * faces(n) % area
    end do
-   do n = 2, nCells-1
+   do n = 1, nCells
       qt = 0.0d0
       do f = 1, cells(n) % nFace
          qt = qt + cells(n) % f_sign(f) * faces(cells(n) % faces(f) ) % flux

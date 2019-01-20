@@ -1,13 +1,15 @@
-HOMEDIR=../../
+HOMEDIR=../../../
 
 include $(HOMEDIR)Makefile.global
 
 TOOLS_OBJ=$(HOMEDIR)$(TOOLS_DIR)/obj/
 CODE_OBJ=$(HOMEDIR)obj/
 INCLUDE += -I$(TOOLS_OBJ) -I$(CODE_OBJ)
+SOL2CSV =$(HOMEDIR)tools/bin/sol2csv 2
+SOL2PARA =$(HOMEDIR)tools/bin/sol2para
 
 para: compile run test
-all: compile run post
+post: compile run plot
 
 compile:
 	@$(MAKE) -C $(HOMEDIR) --no-print-directory
@@ -18,22 +20,22 @@ gridgen: gridgen.F90 $(CODE_OBJ)/types.o $(CODE_OBJ)/file_io.o
 run: gridgen
 	@./$<
 	@cp sol.dat sol_00000.dat
-	@$(HOMEDIR)/tools/bin/sol2csv
+	@$(SOL2CSV)
 	@mv sol.csv start.csv
-	@$(HOMEDIR)/bin/adapt
-post: exact.csv
-	@$(HOMEDIR)/tools/bin/sol2csv
+	@$(HOMEDIR)bin/adapt
+plot: exact.csv
+	@$(SOL2CSV)
 	@gnuplot -p plot.gnuplot
 
 clean:
-	@rm -f *.dat *.vtk gridgen *.mod fort.* *.csv exact_riemann
+	@rm -f *.dat *.vtk gridgen *.mod fort.* *.csv 
 
-exact.csv: exact_riemann
-	@./$<
+exact.csv: ../exact_riemann
+	@$<
 
-exact_riemann: exact_riemann.F90
+../exact_riemann: ../exact_riemann.F90
 	gfortran $< -o $@
 
 test:
-	for i in sol_*.dat; do ../../tools/bin/sol2para $$i $${i%dat}vtk; done
-	for i in sol_*.dat; do ../../tools/bin/sol2csv  $$i $${i%dat}csv; done
+	for i in sol_*.dat; do $(SOL2PARA) $$i $${i%dat}vtk; done
+	for i in sol_*.dat; do $(SOL2CSV) $$i $${i%dat}csv; done

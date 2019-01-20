@@ -1,27 +1,34 @@
 module refinement
 use const
 use types
+use face, only: add_face
 implicit none
 
 contains
-subroutine doRefinement (cells,parentCells,pnts,nCells,nParentCells,nPnts  &
+subroutine doRefinement (cells,parentCells,pnts,faces                      &
+                        ,nCells,nParentCells,nPnts,nFace                   &
                         ,refineType,refineList,nRefine                     &
                         ,canCoarseList,nCanCoarse                          &
                         ,doCoarseList,nDoCoarse                            &
                         ,holesParentCells,nHolesParentCell                 &
                         ,holesPnts       ,nHolesPnt                        &
+                        ,holesFaces      ,nHolesFace                       &
                         ,debug_in)
 implicit none
 type(tCell)   , intent (inout)            :: cells(:)
 type(tParentCell)   , intent (inout)      :: parentCells(:)
 real(kind = 8), intent (inout)            :: pnts(:,:)
+type(tFace      )   , intent (inout)      :: faces(:)
 
 integer       , intent (inout)            :: nCells
 integer       , intent (inout)            :: nParentCells
 integer       , intent (inout)            :: nPnts
+integer       , intent (inout)            :: nFace
+
 integer       , intent (in)               :: refineType(:)
 integer       , intent (inout)            :: refineList(:)
 integer       , intent (in)               :: nRefine
+
 integer       , intent (inout)            :: canCoarseList(:)
 integer       , intent (inout)            :: nCanCoarse
 
@@ -33,6 +40,9 @@ integer       , intent (inout)            :: nHolesParentCell
 
 integer       , intent (inout)            :: holesPnts(:)
 integer       , intent (inout)            :: nHolesPnt             
+
+integer       , intent (inout)            :: holesFaces(:)
+integer       , intent (inout)            :: nHolesFace             
 
 logical       , intent (in), optional     :: debug_in
 
@@ -60,6 +70,7 @@ integer                                   :: opc,npc1,npc2,npc3,npc4            
 integer                                   :: rfl,nrfl
 integer                                   :: p(5)
 
+integer                                   :: mf,myFace
 logical                                   :: found
 logical                                   :: debug
 
@@ -68,6 +79,7 @@ if (present(debug_in)) then
    debug = debug_in
 else
    debug = .false.
+   write(*,*) nHolesFace, holesFaces(1)
 end if
 nIntervall = nRefine + nDoCoarse
 if (nDoCoarse > 0 .and. nRefine > 0) then
@@ -257,6 +269,11 @@ do ci = 1, nIntervall
    end do
 end do
 
+! Updating Face stencil information
+do i = 1, nFace
+   faces(i) % stencil(1,1) = CellId_old2new(faces(i) % stencil(1,1))
+   faces(i) % stencil(1,2) = CellId_old2new(faces(i) % stencil(1,2))
+end do
 ! **************************************************************************************************
 !           
 !                COARSENING IN BOTH DIRECTIONS
@@ -388,18 +405,66 @@ do r = 1, nRefine
          rfl  = cells(nc1) % refineLevel(2)
          nrfl = cells(nc ) % refineLevel(2)
          if ( nrfl < rfl) then    ! CASE 1
+!
+!      ----------------|-----------|-----
+!                      |           |
+!                      |   oc      |
+!                      |           |
+!                      |           |
+!         nc           [===========]-----
+!                      [           ]
+!                      [   nc1     ]
+!                      [           ]
+!                      [           ]
+!      ----------------[===========]-----
+!
             cells(nc1) % neigh(1) = nc
             if (debug) write(*,*) nc1,"setting left neighbor to", nc
+            call add_face(nc1,nc,LEFT,cells,pnts,faces,holesFaces,nHolesFace,nFace,debug)
          else if (nrfl == rfl) then   
             nc   = cells(nc) % neigh(3) !! get south neighbor
             nrfl = cells(nc) % refineLevel(2)
             if (nrfl == rfl) then    ! CASE 2
+!
+!              ---|---------|--------|-----
+!                 |         |        |
+!                 |    *    |   oc   |
+!                 |   \|/   |        |
+!                 |---------[========]-----
+!                 |         [        ]
+!                 |    nc   [   nc1  ]
+!                 |         [        ]
+!              ---|---------[========]-----
+!
+               !modify Right face 1 face of  LEFT neighbor cell
+               myFace = cells(nc) % faces_dir(RIGHT,1)
+               faces(myFace) % stencil(1,2) = nc1
+
+               ! number of faces in new cell 
+               mf = cells(nc1) % nFace + 1
+               cells(nc1) % nFace = mf
+               cells(nc1) % faces(mf) = myFace
+               cells(nc1) % faces_dir_ref(LEFT)   = .false.
+               cells(nc1) % faces_dir    (LEFT,1) = myFace
+               cells(nc1) % f_sign(mf) = -1.0d0
+            
                cells(nc1) % neigh(1) = nc
                if (debug) write(*,*) nc1,"setting left neighbor to", nc
                cells(nc ) % neigh(2) = nc1
                if (debug) write(*,*) nc,"setting right neighbor to", nc1
-            else if (nrfl == rfl +1) then!!! CASE 4
-               nc   = cells(nc) % neigh(2) !! get east neighbor
+            else if (nrfl == rfl+1) then!!! CASE 4
+!
+!              ---|---------|---------|-----
+!                 |         |         |
+!                 | *       |   oc    |
+!                 |\|/      |         |
+!                 |----|----[=========]-----
+!                 | -> | nc [         ]
+!                 |---------[   nc1   ]
+!                 |    |    [         ]
+!              ---|----|----[=========]-----
+!
+               nc   = cells(nc) % neigh(2) !! get RIGHT neighbor
                cells(nc1) % neigh(1) = nc
                if (debug) write(*,*) nc1,"setting left neighbor to", nc
                cells(nc ) % neigh(2) = nc1
@@ -407,6 +472,27 @@ do r = 1, nRefine
                nc   = cells(nc) % neigh(3) !! get south neighbor
                cells(nc ) % neigh(2) = nc1
                if (debug) write(*,*) nc,"setting right neighbor to", nc1
+
+               !modify Right face 1 face of  LEFT neighbor cell
+               myFace = cells(nc) % faces_dir(RIGHT,1)
+               faces(myFace) % stencil(1,2) = nc1
+
+               mf = cells(nc1) % nFace + 1
+               cells(nc1) % faces_dir_ref(LEFT)   = .true.
+               cells(nc1) % faces_dir    (LEFT,1) = myFace
+               cells(nc1) % f_sign(mf) = -1.0d0
+
+               !modify Right face 1 face of LEFT LOWER neighbor cell
+               nc   = cells(nc) % neigh(SOUTH) !! get RIGHT neighbor
+               myFace = cells(nc) % faces_dir(RIGHT,1)
+               faces(myFace) % stencil(1,2) = nc1
+
+               ! number of faces in new cell 
+               mf = cells(nc1) % nFace + 1
+               cells(nc1) % nFace = mf
+               cells(nc1) % faces(mf) = myFace
+               cells(nc1) % faces_dir    (LEFT,2) = myFace
+               cells(nc1) % f_sign(mf) = -1.0d0
             else
                write(*,*) "Neighbor LEFT: Second Neighbor: refinement level not supported",__LINE__,__FILE__
                write(*,*) "old:",ctr,"Cell",oc,"Neighbor",cells(oc) % neigh,"REF:",rfl,nrfl
@@ -419,15 +505,59 @@ do r = 1, nRefine
                stop 1
             end if
          else if (nrfl == rfl+1) then
+!
+!              ---|----|----|--------|-----
+!                 |    |\/ *|        |
+!                 |----|----|   oc   |
+!                 |    |\|/ |        |
+!                 |----|----[========]-----
+!                 |         [        ]
+!                 |    ?    [   nc1  ]
+!                 |         [        ]
+!              ---|---------[========]-----
+!
             nc   = cells(nc) % neigh(3) !! get south neighbor
             nc   = cells(nc) % neigh(3) !! get south neighbor
             nrfl = cells(nc) % refineLevel(2)
             if (nrfl == rfl) then    !  CASE 3
+!
+!              ---|----|----|--------|-----
+!                 |    |\/ *|        |
+!                 |----|----|   oc   |
+!                 |    |\|/ |        |
+!                 |----|----[========]-----
+!                 |         [        ]
+!                 |    nc   [   nc1  ]
+!                 |         [        ]
+!              ---|---------[========]-----
+!
                cells(nc1) % neigh(1) = nc
                if (debug) write(*,*) nc1,"setting left neighbor to", nc
                cells(nc ) % neigh(2) = nc1
                if (debug) write(*,*) nc,"setting right neighbor to", nc1
+               !modify Right face 1 face of  LEFT neighbor cell
+               myFace = cells(nc) % faces_dir(RIGHT,1)
+               faces(myFace) % stencil(1,2) = nc1
+
+               mf = cells(nc1) % nFace + 1
+               cells(nc1) % nFace = mf
+               cells(nc1) % faces(mf) = myFace
+               cells(nc1) % faces_dir_ref(LEFT)   = .true.
+               cells(nc1) % faces_dir    (LEFT,1) = myFace
+               cells(nc1) % f_sign(mf) = -1.0d0
+
             else if (nrfl == rfl+1) then ! CASE 5
+!
+!              ---|----|----|--------|-----
+!                 |    |\/ *|        |
+!                 |----|----|   oc   |
+!                 |    |\|/ |        |
+!                 |----|----[========]-----
+!                 |    | nc [        ]
+!                 |----|----[   nc1  ]
+!                 |    |    [        ]
+!              ---|----|----[========]-----
+!
                cells(nc1) % neigh(1) = nc
                if (debug) write(*,*) nc1,"setting left neighbor to", nc
                cells(nc ) % neigh(2) = nc1
@@ -435,6 +565,28 @@ do r = 1, nRefine
                nc = cells(nc) % neigh(3) !! get south neighbor
                cells(nc ) % neigh(2) = nc1
                if (debug) write(*,*) nc,"setting right neighbor to", nc1
+               !modify Right face 1 face of  LEFT neighbor cell
+               myFace = cells(nc) % faces_dir(RIGHT,1)
+               faces(myFace) % stencil(1,2) = nc1
+
+               mf = cells(nc1) % nFace + 1
+               cells(nc1) % nFace = mf
+               cells(nc1) % faces(mf) = myFace
+               cells(nc1) % faces_dir_ref(LEFT)   = .true.
+               cells(nc1) % faces_dir    (LEFT,1) = myFace
+               cells(nc1) % f_sign(mf) = -1.0d0
+
+               !modify Right face 1 face of LEFT LOWER neighbor cell
+               nc   = cells(nc) % neigh(SOUTH) !! get SOUTH neighbor
+               myFace = cells(nc) % faces_dir(RIGHT,1)
+               faces(myFace) % stencil(1,2) = nc1
+
+               ! number of faces in new cell 
+               mf = cells(nc1) % nFace + 1
+               cells(nc1) % nFace = mf
+               cells(nc1) % faces(mf) = myFace
+               cells(nc1) % faces_dir    (LEFT,2) = myFace
+               cells(nc1) % f_sign(mf) = -1.0d0
             else
                write(*,*) "Neighbor West: Second Neighbor RFL/=: refinement level not supported",__LINE__,__FILE__
                write(*,*) nc,nrfl,rfl
@@ -449,15 +601,29 @@ do r = 1, nRefine
       else
          cells(nc1) % neigh(1) = nc
          if (debug) write(*,*) nc1,"setting left neighbor to", nc
+         myFace = cells(oc) % faces_dir(RIGHT,1)
+
+         mf = cells(nc1) % nFace + 1
+         cells(nc1) % nFace = mf
+         cells(nc1) % faces(mf) = myFace
+         cells(nc1) % faces_dir_ref(LEFT)   = .true.
+         cells(nc1) % faces_dir    (LEFT,1) = myFace
+         cells(nc1) % f_sign(mf) = -1.0d0
       end if
 
-      cells(nc1) % neigh(2) = nc2
+      ! NEIGHBOR RIGHT
+      cells(nc1) % neigh(RIGHT) = nc2
       if (debug) write(*,*) nc1,"setting right neighbor to", nc2
+      call add_face(nc1,nc2,RIGHT,cells,pnts,faces,holesFaces,nHolesFace,nFace,debug)
 
       !Neighbor SOUTH
       nc = cells(oc) % neigh(3)
       cells(nc1) % neigh(3) = nc
       if (debug) write(*,*) nc1,"setting south neighbor to", nc
+      ! FACE
+      myFace = cells(oc) % faces_dir(SOUTH,1)
+      ! set normal vector of face
+      faces(myFace) % n = [0.0d0,1.0d0]
       if (nc /= NO_CELL) then
          if (cells(nc) % neigh(4) == oc) then
             cells(nc) % neigh(4) = nc1
@@ -481,7 +647,6 @@ do r = 1, nRefine
       end if
       cells(nc1) % neigh(4) = oc
       if (debug) write(*,*) nc1,"setting north neighbor to", oc
-
 
       !! UPDATE NEW CELL
 

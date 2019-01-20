@@ -43,19 +43,24 @@ do i = 1, nCells
    cells(i) % nFace = 0
 end do
 do i = 1, nCells
-   do f = 1,2
+   do f = LEFT,RIGHT
       n = cells(i) % neigh(f)
-      if (n > i .and. n/= NO_CELL) then
+      if (n > i .and. n /= NO_CELL) then
          nFace = nFace + 1
          faces(nFace) % n = [1.0d0,0.0d0]
 
          cells(i) % nFace = cells(i) % nFace + 1
          mf = cells(i) % nFace   ! MyFace
          cells(i) % faces(mf)  = nFace
+         cells(i) % faces_dir_ref(f)   = .false.
+         cells(i) % faces_dir    (f,1) = nFace
 
          cells(n) % nFace = cells(n) % nFace + 1
          nf = cells(n) % nFace   ! NeighborFace
          cells(n) % faces(nf)  = nFace
+         cells(n) % faces_dir_ref(3-f)   = .false.
+         cells(n) % faces_dir    (3-f,1) = nFace
+
          if (f == LEFT) then
             cells(i) % f_sign(mf) =  1.0d0
             cells(n) % f_sign(nf) = -1.0d0
@@ -68,6 +73,76 @@ do i = 1, nCells
             faces(nFace) % area = pnts(2,cells(i) % pnts(3)) - pnts(2,cells(i) % pnts(2))
             faces(nFace) % stencil(1,1) = i
             faces(nFace) % stencil(1,2) = n
+         end if
+      else if (n == NO_CELL) then
+         nFace = nFace + 1
+         faces(nFace) % n = [1.0d0,0.0d0]
+
+         cells(i) % nFace = cells(i) % nFace + 1
+         mf = cells(i) % nFace   ! MyFace
+         cells(i) % faces(mf)  = nFace
+         cells(i) % faces_dir_ref(f)   = .false.
+         cells(i) % faces_dir    (f,1) = nFace
+
+         faces(nFace) % stencil(1,1) = i
+         faces(nFace) % stencil(1,2) = i
+         if (f == LEFT) then
+            cells(i) % f_sign(mf) =  1.0d0
+            faces(nFace) % area = pnts(2,cells(i) % pnts(4)) - pnts(2,cells(i) % pnts(1))
+         else
+            cells(i) % f_sign(mf) = -1.0d0
+            faces(nFace) % area = pnts(2,cells(i) % pnts(3)) - pnts(2,cells(i) % pnts(2))
+         end if
+      end if
+   end do
+   do f = SOUTH,NORTH
+      n = cells(i) % neigh(f)
+      if (n > i .and. n /= NO_CELL) then
+         nFace = nFace + 1
+         faces(nFace) % n = [0.0d0,1.0d0]
+
+         cells(i) % nFace = cells(i) % nFace + 1
+         mf = cells(i) % nFace   ! MyFace
+         cells(i) % faces(mf)  = nFace
+         cells(i) % faces_dir_ref(f)   = .false.
+         cells(i) % faces_dir    (f,1) = nFace
+
+         cells(n) % nFace = cells(n) % nFace + 1
+         nf = cells(n) % nFace   ! NeighborFace
+         cells(n) % faces(nf)  = nFace
+         cells(n) % faces_dir_ref(7-f)   = .false.
+         cells(n) % faces_dir    (7-f,1) = nFace
+         if (f == SOUTH) then
+            cells(i) % f_sign(mf) =  1.0d0
+            cells(n) % f_sign(nf) = -1.0d0
+            faces(nFace) % area = pnts(1,cells(i) % pnts(2)) - pnts(1,cells(i) % pnts(1))
+            faces(nFace) % stencil(1,1) = n
+            faces(nFace) % stencil(1,2) = i
+         else
+            cells(i) % f_sign(mf) = -1.0d0
+            cells(n) % f_sign(nf) =  1.0d0
+            faces(nFace) % area = pnts(1,cells(i) % pnts(3)) - pnts(1,cells(i) % pnts(4))
+            faces(nFace) % stencil(1,1) = i
+            faces(nFace) % stencil(1,2) = n
+         end if
+      else if (n == NO_CELL) then
+         nFace = nFace + 1
+         faces(nFace) % n = [0.0d0,1.0d0]
+
+         cells(i) % nFace = cells(i) % nFace + 1
+         mf = cells(i) % nFace   ! MyFace
+         cells(i) % faces(mf)  = nFace
+         cells(i) % faces_dir_ref(f)   = .false.
+         cells(i) % faces_dir    (f,1) = nFace
+
+         faces(nFace) % stencil(1,1) = i
+         faces(nFace) % stencil(1,2) = i
+         if (f == SOUTH) then
+            cells(i) % f_sign(mf) =  1.0d0
+            faces(nFace) % area = pnts(1,cells(i) % pnts(2)) - pnts(1,cells(i) % pnts(1))
+         else
+            cells(i) % f_sign(mf) = -1.0d0
+            faces(nFace) % area = pnts(1,cells(i) % pnts(3)) - pnts(1,cells(i) % pnts(4))
          end if
       end if
    end do

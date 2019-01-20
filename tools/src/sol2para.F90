@@ -96,6 +96,47 @@ do i = 1, nCells
    write(fo,*) cells(i) % refineLevel(1)
 end do
 
+write(fo,"(A)") 'SCALARS Density double'
+write(fo,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, nCells
+   write(fo,*) cells(i) % Q(1)
+end do
+
+!write(fo,"(A)") 'VECTORS Velocity double'
+!do i = 1, nCells
+!   write(fo,*) cells(i) % Q(2:3)
+!end do
+
+write(fo,"(A)") 'SCALARS VelX double'
+write(fo,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, nCells
+   write(fo,*) cells(i) % Q(2)
+end do
+
+write(fo,"(A)") 'SCALARS VelY double'
+write(fo,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, nCells
+   write(fo,*) cells(i) % Q(3)
+end do
+
+write(fo,"(A)") 'SCALARS Energy double'
+write(fo,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, nCells
+   write(fo,*) cells(i) % Q(4)
+end do
+
+write(fo,"(A)") 'SCALARS GradX double'
+write(fo,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, nCells
+   write(fo,*) cells(i) % grad(1,1)
+end do
+
+write(fo,"(A)") 'SCALARS GradY double'
+write(fo,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, nCells
+   write(fo,*) cells(i) % grad(2,1)
+end do
+
 !write(fo,"(A)") 'SCALARS Refinement_Level_J int'
 !write(fo,"(A)") 'LOOKUP_TABLE Default'
 !do i = 1, nCells
@@ -131,47 +172,6 @@ end do
 !do i = 1, nCells
 !   write(fo,*) cells(i) % neigh(4)
 !end do
-
-write(fo,"(A)") 'SCALARS Density double'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % Q(1)
-end do
-
-!write(fo,"(A)") 'VECTORS Velocity double'
-!do i = 1, nCells
-!   write(fo,*) cells(i) % Q(2:3)
-!end do
-
-write(fo,"(A)") 'SCALARS VelX double'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % Q(2)
-end do
-
-!write(fo,"(A)") 'SCALARS VelY double'
-!write(fo,"(A)") 'LOOKUP_TABLE Default'
-!do i = 1, nCells
-!   write(fo,*) cells(i) % Q(3)
-!end do
-
-write(fo,"(A)") 'SCALARS Energy double'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % Q(3)
-end do
-
-write(fo,"(A)") 'SCALARS GradX double'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % grad(1,1)
-end do
-
-write(fo,"(A)") 'SCALARS GradY double'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nCells
-   write(fo,*) cells(i) % grad(2,1)
-end do
 
 close(fo)
 end program sol2para

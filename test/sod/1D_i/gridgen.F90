@@ -91,12 +91,13 @@ do j = 1, nj-1
       cells(n) % Q(2:3) = 0.0d0
       if ( i <= int(dble(ni-1) / 2.0d0)) then
          cells(n) % Q(1) = 1.0d0
-         cells(n) % Q(3) = 1.0d0
+         cells(n) % Q(4) = 1.0d0     ! set pressure
       else
          cells(n) % Q(1) = 0.125d0
-         cells(n) % Q(3) = 0.1d0
+         cells(n) % Q(4) = 0.1d0     ! set pressure
       end if
-      cells(n) % Q(3) = 1.0d0/0.4d0 * cells(n) % Q(3) / cells(n) % Q(1) + 0.5 * cells(n) % Q(2) ** 2
+      ! convert pressure to energy
+      cells(n) % Q(4) = 1.0d0/0.4d0 * cells(n) % Q(4) / cells(n) % Q(1) + 0.5 * (cells(n) % Q(2) ** 2+ cells(n) % Q(3) ** 2)
    end do
 end do
 

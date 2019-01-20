@@ -28,6 +28,9 @@ type :: tCell
                                                                      !                   * 2 (for both sides)
    real(kind = 8)                         :: f_sign(GIT_DIM*2*2)     ! Sign of each Flux of the cell face
 
+   integer                                :: faces_dir(GIT_DIM*2,2)
+   logical                                :: faces_dir_ref(GIT_DIM*2)
+
 end type tCell
 type :: tParentCell
 ! **************************************************************************************************
