@@ -29,8 +29,11 @@ use refinement
 use init
 use choose
 use fluxes
+use git_version_module
 implicit none
-include "git_version.h"
+!include "git_version.h"
+!character(len=*), parameter :: GIT_VERSION = "NOT YET IMPLEMENTED"
+!character(len=*), parameter :: GIT_DATE    = "NOT YET IMPLEMENTED"
 integer         , parameter         :: MAXCELLS = 200000
 integer         , parameter         :: MAXPNTS  = 400000
 integer         , parameter         :: MAXLIST = MAXCELLS / 10

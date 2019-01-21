@@ -1,0 +1,5 @@
+module git_version_module
+    implicit none
+    character(len=*), parameter :: GIT_VERSION = "@GIT_HEAD_SHA1@"
+    character(len=*), parameter :: GIT_DATE    = "@GIT_DATE@"
+end module git_version_module

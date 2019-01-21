@@ -494,7 +494,8 @@ do r = 1, nRefine
                cells(nc1) % faces_dir    (LEFT,2) = myFace
                cells(nc1) % f_sign(mf) = -1.0d0
             else
-               write(*,*) "Neighbor LEFT: Second Neighbor: refinement level not supported",__LINE__,__FILE__
+               write(*,*) "Neighbor LEFT: Second Neighbor: refinement level not supported" &
+                   ,__LINE__,__FILE__
                write(*,*) "old:",ctr,"Cell",oc,"Neighbor",cells(oc) % neigh,"REF:",rfl,nrfl
                nc = cells(oc) % neigh(1)
                write(*,*) "Neighbor from OC:", nc, cells(nc) % refineLevel, cells(nc) % neigh
@@ -588,12 +589,14 @@ do r = 1, nRefine
                cells(nc1) % faces_dir    (LEFT,2) = myFace
                cells(nc1) % f_sign(mf) = -1.0d0
             else
-               write(*,*) "Neighbor West: Second Neighbor RFL/=: refinement level not supported",__LINE__,__FILE__
+               write(*,*) "Neighbor West: Second Neighbor RFL/=: refinement level not supported" &
+                   ,__LINE__,__FILE__
                write(*,*) nc,nrfl,rfl
                stop 1
             end if
          else
-            write(*,*) "Neighbor WEST with higher refinment level not implemented yet",__LINE__,__FILE__
+            write(*,*) "Neighbor WEST with higher refinment level not implemented yet" &
+                ,__LINE__,__FILE__
             write(*,*) nc1, cells(nc1) % refineLevel
             write(*,*) nc , cells(nc ) % refineLevel
             stop 1
@@ -679,7 +682,8 @@ do r = 1, nRefine
                cells(nc ) % neigh(1) = nc2
                if (debug) write(*,*) nc,"setting left neighbor to", nc2
             else
-               write(*,*) "Neighbor RIGHT: Second Neighbor: refinement level not supported",__LINE__,__FILE__
+               write(*,*) "Neighbor RIGHT: Second Neighbor: refinement level not supported" &
+                   ,__LINE__,__FILE__
                write(*,*) nc2, cells(nc2) % refineLevel, cells(nc2) % neigh
                write(*,*) nc, cells(nc) % refineLevel, cells(nc) % neigh
                write(*,*) cells(oc ) % neigh(2)
@@ -699,13 +703,15 @@ do r = 1, nRefine
                cells(nc ) % neigh(1) = nc2
                if (debug) write(*,*) nc,"setting left neighbor to", nc2
             else
-               write(*,*) "Neighbor RIGHT: Second Neighbor RFL/=: refinement level not supported",__LINE__,__FILE__
+               write(*,*) "Neighbor RIGHT: Second Neighbor RFL/=: refinement level not supported" &
+                   ,__LINE__,__FILE__
                write(*,*) nc,nrfl,rfl
                stop 1
             end if
             
          else
-            write(*,*) "Neighbor RIGHT with higher refinment level not implemented yet",__LINE__,__FILE__
+            write(*,*) "Neighbor RIGHT with higher refinment level not implemented yet" &
+                ,__LINE__,__FILE__
             stop 1
          end if
       else
@@ -734,7 +740,8 @@ do r = 1, nRefine
                cells(nc ) % neigh(4) = nc2
                if (debug) write(*,*) nc,"setting north neighbor to", nc2
             else
-               write(*,*) "Neighbor SOUTH: Second Neighbor: refinement level not supported",__LINE__,__FILE__
+               write(*,*) "Neighbor SOUTH: Second Neighbor: refinement level not supported" &
+                   ,__LINE__,__FILE__
                write(*,*) nc2, cells(nc2) % refineLevel, cells(nc2) % neigh
                write(*,*) nc, cells(nc) % refineLevel, cells(nc) % neigh
                write(*,*) cells(oc ) % neigh(3)
@@ -754,13 +761,15 @@ do r = 1, nRefine
                cells(nc ) % neigh(4) = nc2
                if (debug) write(*,*) nc,"setting north neighbor to", nc2
             else
-               write(*,*) "Neighbor SOUTH: Second Neighbor RFL/=: refinement level not supported",__LINE__,__FILE__
+               write(*,*) "Neighbor SOUTH: Second Neighbor RFL/=: refinement level not supported" &
+                   ,__LINE__,__FILE__
                write(*,*) nc,nrfl,rfl
                stop 1
             end if
             
          else
-            write(*,*) "Neighbor SOUTH with higher refinment level not implemented yet",__LINE__,__FILE__
+            write(*,*) "Neighbor SOUTH with higher refinment level not implemented yet" &
+                ,__LINE__,__FILE__
             stop 1
          end if
       else
@@ -827,7 +836,8 @@ do r = 1, nRefine
                cells(nc ) % neigh(3) = nc3
                if (debug) write(*,*) nc,"setting south neighbor to", nc3
             else
-               write(*,*) "Neighbor NORTH: Second Neighbor: refinement level not supported",__LINE__,__FILE__
+               write(*,*) "Neighbor NORTH: Second Neighbor: refinement level not supported" &
+                   ,__LINE__,__FILE__
                write(*,*) nc3, cells(nc3) % refineLevel, cells(nc3) % neigh
                write(*,*) nc, cells(nc) % refineLevel, cells(nc) % neigh
                write(*,*) cells(oc ) % neigh(4)
@@ -857,7 +867,8 @@ do r = 1, nRefine
                stop 1
             end if
          else
-            write(*,*) "Neighbor NORTH with higher refinment level not implemented yet",__LINE__,__FILE__
+            write(*,*) "Neighbor NORTH with higher refinment level not implemented yet" &
+                ,__LINE__,__FILE__
             stop 1
          end if
       else
