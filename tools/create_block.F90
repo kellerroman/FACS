@@ -1,22 +1,21 @@
 module mod_create_block
     implicit none 
     contains
-    subroutine create_block(ni,nj)
+    subroutine create_block(ni,nj,cells,pnts,nCells,nPnts)
     use types
     implicit none
     integer,intent(in)                  :: ni
     integer,intent(in)                  :: nj
+    type(tCell), allocatable            :: cells(:)
+    real(kind = 8), allocatable         :: pnts(:,:)
+    integer,intent(out)                 :: nCells
+    integer,intent(out)                 :: nPnts
+
 
     real(kind = 8)                      :: xmin = 0.0d0
     real(kind = 8)                      :: xmax = 1.0D0
     real(kind = 8)                      :: ymin =  0.0d+0
     real(kind = 8)                      :: ymax =  1.0d+0
-
-    type(tCell), allocatable            :: cells(:)
-    real(kind = 8), allocatable         :: pnts(:,:)
-    integer                             :: nCells
-    integer                             :: nPnts
-
 
     integer                             :: i,j
     integer                             :: n1
@@ -25,10 +24,7 @@ module mod_create_block
 
     nCells = (ni-1) * (nj-1)
     nPnts  =  ni    *  nj
-
-    allocate (cells(nCells))
-    allocate (pnts(2,nPnts))
-
+ 
     dx = (xmax - xmin) / dble(ni-1)
     dy = (ymax - ymin) / dble(nj-1)
 

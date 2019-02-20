@@ -6,6 +6,7 @@ target_link_libraries(sol2para common)
 
 add_library(create_block create_block.F90)
 target_link_libraries(create_block common)
+target_include_directories (create_block  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 #target_link_libraries(create_xdmf.exe "hdf5_fortran")
 

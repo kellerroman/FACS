@@ -71,11 +71,18 @@ add_executable (adapt.exe ${POST_CONFIGURE_FILE} ${sources})
 #target_link_libraries(heat.exe "${HDF5}" "${HDF5_Fortran_LIBRARIES}")
 target_link_libraries(adapt.exe "hdf5" "hdf5_fortran")
 target_link_libraries(adapt.exe common)
+target_link_libraries(adapt.exe init)
 
-add_library(common src/common/file_io.F90 src/common/const.F90 src/common/types.F90)
+file (GLOB src_common src/common/*.F90)
+add_library(common ${src_common})
 target_include_directories (common  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
+file (GLOB src_init src/init/*.F90)
+add_library(init ${src_init})
+target_include_directories (init  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(init common)
 
 include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(tools)
-#add_subdirectory(test)
+add_subdirectory(test)
