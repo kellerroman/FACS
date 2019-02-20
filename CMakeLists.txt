@@ -49,7 +49,7 @@ execute_process(COMMAND
 #------------------------
 # Define the source path
 #------------------------
-file (GLOB_RECURSE sources src/*.F90)
+file (GLOB sources src/*.F90)
 
 #--------------------------
 # Include HDF5 Library
@@ -70,6 +70,12 @@ include(git_watcher.cmake)
 add_executable (adapt.exe ${POST_CONFIGURE_FILE} ${sources})
 #target_link_libraries(heat.exe "${HDF5}" "${HDF5_Fortran_LIBRARIES}")
 target_link_libraries(adapt.exe "hdf5" "hdf5_fortran")
+target_link_libraries(adapt.exe common)
 
-#add_subdirectory(tools)
+add_library(common src/common/file_io.F90 src/common/const.F90 src/common/types.F90)
+target_include_directories (common  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
+include_directories(${CMAKE_BINARY_DIR})
+
+add_subdirectory(tools)
 #add_subdirectory(test)
