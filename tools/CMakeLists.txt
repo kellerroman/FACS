@@ -1,10 +1,12 @@
 add_executable(sol2csv sol2csv.F90)
-add_executable(sol2para sol2para.F90)
 target_link_libraries(sol2csv common)
+
+add_executable(sol2para sol2para.F90)
 target_link_libraries(sol2para common)
 
-set(CMAKE_Fortran_MODULE_DIRECTORY $(CMAKE_BINARY_DIR}/mod_files)
-install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION include))
+add_library(create_block create_block.F90)
+target_link_libraries(create_block common)
+
 #target_link_libraries(create_xdmf.exe "hdf5_fortran")
 
 #add_library(module_gridgen module_gridgen.F90)
