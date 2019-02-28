@@ -50,6 +50,9 @@ execute_process(COMMAND
 # Define the source path
 #------------------------
 file (GLOB sources src/*.F90)
+file (GLOB src_common src/common/*.F90)
+file (GLOB src_init src/init/*.F90)
+file (GLOB src_ref src/refinement/*.F90)
 
 #--------------------------
 # Include HDF5 Library
@@ -64,25 +67,30 @@ include_directories(${HDF5_INCLUDE_DIRS})
 set(PRE_CONFIGURE_FILE "src/git_version.F90.in")
 set(POST_CONFIGURE_FILE "${CMAKE_BINARY_DIR}/git_version.F90")
 include(git_watcher.cmake)
+
 #-------------------------
 # Define the build & link
 #-------------------------
+
+add_library(common ${src_common})
+target_include_directories (common  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
+add_library(init ${src_init})
+target_include_directories (init  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(init common)
+
+add_library(refin ${src_ref})
+target_include_directories (refin  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(refin common)
+
 add_executable (adapt.exe ${POST_CONFIGURE_FILE} ${sources})
 #target_link_libraries(heat.exe "${HDF5}" "${HDF5_Fortran_LIBRARIES}")
 target_link_libraries(adapt.exe "hdf5" "hdf5_fortran")
 target_link_libraries(adapt.exe common)
 target_link_libraries(adapt.exe init)
+target_link_libraries(adapt.exe refin)
 
-file (GLOB src_common src/common/*.F90)
-add_library(common ${src_common})
-target_include_directories (common  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-
-file (GLOB src_init src/init/*.F90)
-add_library(init ${src_init})
-target_include_directories (init  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(init common)
-
-include_directories(${CMAKE_BINARY_DIR})
+#include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(tools)
 add_subdirectory(test)

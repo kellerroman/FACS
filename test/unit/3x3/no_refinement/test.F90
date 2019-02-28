@@ -3,9 +3,10 @@ use types
 use init
 use mod_create_block
 use refinement
+use file_io
 
 implicit none
-integer         , parameter         :: MAXCELLS = 12
+integer         , parameter         :: MAXCELLS = 50
 integer         , parameter         :: MAXPNTS  = 50
 integer         , parameter         :: MAXLIST = MAXCELLS
 
@@ -42,6 +43,8 @@ integer                             :: nFace
 integer, allocatable                :: holesFaces(:)   ! List of Holes in Point Array
 integer                             :: nHolesFace
 
+integer :: i
+
 write(*,'(90("="))') 
 write(*,'(90("="))') 
 write(*,'( 3("="),10X,A)') "UNIT TEST NO REFINEMENT"
@@ -69,4 +72,23 @@ nHolesPnt         = 0
 nHolesFace        = 0
 call create_block(4,4,cells,pnts,nCells,nPnts)
 call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
+nRefine = 1
+refineList(nRefine) = 5
+refineType(5) = 3
+
+call doRefinement (cells,parentCells,pnts,faces                      &
+                  ,nCells,nParentCells,nPnts,nFace                   &
+                  ,refineType,refineList,nRefine                     &
+                  ,canCoarseList,nCanCoarse                          &
+                  ,doCoarseList,nDoCoarse                            &
+                  ,holesParentCells,nHolesParentCell                 &
+                  ,holesPnts,nHolesPnt                               &
+                  ,holesFAces,nHolesFace                             &
+                  ,.true.)
+
+call write_sol(cells,pnts,nCells,nPnts,"sol.dat")
+
+do i = 1, nCells
+    write(*,*) i, cells(i) % refineLevel, cells(i) % pnts, cells(i) % neigh
+end do
 end program test

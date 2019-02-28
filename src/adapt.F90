@@ -132,12 +132,14 @@ do iter = 1,niter
 !   call smooth_refinement(cells,refineType,refineList,nRefine)
 !   call choose_coarse(cells,parentCells,refineType,canCoarseList,nCanCoarse,doCoarseList,nDoCoarse)
 !
-!   call doRefinement (cells,parentCells,pnts,nCells,nParentCells,nPnts  &
+!   call doRefinement (cells,parentCells,pnts,faces                      &
+!                     ,nCells,nParentCells,nPnts,nFace                   &
 !                     ,refineType,refineList,nRefine                     &
 !                     ,canCoarseList,nCanCoarse                          &
 !                     ,doCoarseList,nDoCoarse                            &
 !                     ,holesParentCells,nHolesParentCell                 &
 !                     ,holesPnts,nHolesPnt                               &
+!                     ,holesFAces,nHolesFace                             &
 !                     ,.false.)
    if (mod(iter,10) == 0) &
    call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
