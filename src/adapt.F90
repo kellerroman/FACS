@@ -30,6 +30,7 @@ use init
 use choose
 use fluxes
 use git_version_module
+use array_holes
 implicit none
 integer         , parameter         :: MAXCELLS = 200000
 integer         , parameter         :: MAXPNTS  = 400000
@@ -37,13 +38,13 @@ integer         , parameter         :: MAXLIST = MAXCELLS / 10
 character(len=*),parameter          :: FILENAME_IN = "sol.dat"
 
 type(tCell), allocatable            :: cells(:)
-integer                             :: nCells
+type(holes)                         :: nCells
 
 type(tParentCell), allocatable      :: parentCells(:)
-integer                             :: nParentCells
+type(holes)                         :: nParentCells
 
 real(kind = 8), allocatable         :: pnts(:,:)
-integer                             :: nPnts
+type(holes)                         :: nPnts
 
 integer, allocatable                :: refineType(:)   ! Type of Refinement for each Cell (Global Cell index)
                                                        ! 1 = i-Ref, 2=j-Ref, 3 = both Ref
@@ -57,17 +58,8 @@ integer                             :: nCanCoarse
 integer, allocatable                :: doCoarseList(:)   ! List all Cells(Cell[first child]) to coarse
 integer                             :: nDoCoarse
 
-integer, allocatable                :: holesParentCells(:)   ! List of Holes in ParentCellsArray
-integer                             :: nHolesParentCell
-
-integer, allocatable                :: holesPnts(:)   ! List of Holes in Point Array
-integer                             :: nHolesPnt
-
 type(tFace), allocatable            :: faces(:)
-integer                             :: nFace
-
-integer, allocatable                :: holesFaces(:)   ! List of Holes in Point Array
-integer                             :: nHolesFace
+type(holes)                         :: nFace
 
 integer                             :: iter,n,f
 
@@ -95,16 +87,9 @@ allocate (refineList       (MAXLIST))
 allocate (refineType       (MAXCELLS))
 allocate (canCoarseList    (MAXCELLS))
 allocate (doCoarseList     (MAXLIST))
-allocate (holesParentCells (MAXCELLS))
-allocate (holesPnts        (MAXPNTS))
-allocate (holesFaces       (MAXCELLS))
-nFace             = 0
 nRefine           = 0
 nDoCoarse         = 0
 nCanCoarse        = 0
-nHolesParentCell  = 0
-nHolesPnt         = 0
-nHolesFace        = 0
 
 call read_sol(FILENAME_IN,cells,pnts,nCells,nPnts)
 
@@ -112,11 +97,11 @@ call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
 
 do iter = 1,niter
    write(*,'(10("="),3X,I5.5,3X,10("="))') iter
-   do n = 1, nFace
+   do n = 1, nFace % nEntry
       call inv_flux(cells(faces(n) % stencil(1,1)) % QC, cells(faces(n) % stencil(1,2)) % QC,faces(n) % n, faces(n) % flux)
       faces(n) % flux = faces(n) % flux * faces(n) % area
    end do
-   do n = 1, nCells
+   do n = 1, nCells % nEntry
       qt = 0.0d0
       do f = 1, cells(n) % nFace
          qt = qt + cells(n) % f_sign(f) * faces(cells(n) % faces(f) ) % flux
@@ -137,14 +122,11 @@ do iter = 1,niter
 !                     ,refineType,refineList,nRefine                     &
 !                     ,canCoarseList,nCanCoarse                          &
 !                     ,doCoarseList,nDoCoarse                            &
-!                     ,holesParentCells,nHolesParentCell                 &
-!                     ,holesPnts,nHolesPnt                               &
-!                     ,holesFAces,nHolesFace                             &
 !                     ,.false.)
    if (mod(iter,10) == 0) &
    call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN,iter)
 end do
-call check_neighbors(cells,nCells,pnts)
+call check_neighbors(cells,nCells%nEntry,pnts)
 call write_sol(cells,pnts,nCells,nPnts,FILENAME_IN)
 
 write(*,'(90("="))') 

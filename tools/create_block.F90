@@ -3,13 +3,14 @@ module mod_create_block
     contains
     subroutine create_block(ni,nj,cells,pnts,nCells,nPnts)
     use types
+    use array_holes
     implicit none
     integer,intent(in)                  :: ni
     integer,intent(in)                  :: nj
     type(tCell), allocatable            :: cells(:)
     real(kind = 8), allocatable         :: pnts(:,:)
-    integer,intent(out)                 :: nCells
-    integer,intent(out)                 :: nPnts
+    type(holes),intent(out)             :: nCells
+    type(holes),intent(out)             :: nPnts
 
 
     real(kind = 8)                      :: xmin = 0.0d0
@@ -21,10 +22,13 @@ module mod_create_block
     integer                             :: n1
     integer                             :: n,i1
     real(kind = 8)                      :: dx,dy
+    integer                             :: nc,np
 
-    nCells = (ni-1) * (nj-1)
-    nPnts  =  ni    *  nj
+    nc = (ni-1) * (nj-1)
+    np  =  ni    *  nj
  
+    call nCells % Init(nc)
+    call nPnts % Init(np)
     dx = (xmax - xmin) / dble(ni-1)
     dy = (ymax - ymin) / dble(nj-1)
 

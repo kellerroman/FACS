@@ -21,6 +21,7 @@ program sol2csv
 !   - 2018-01-19,RK : Started of Project
 ! **************************************************************************************************
 use file_io
+use array_holes
 implicit none
 
 character(len=100)                  :: filename_in = "sol.dat"
@@ -28,8 +29,8 @@ character(len=100)                  :: filename_pv = "sol.csv"
 
 type(tCell), allocatable            :: cells(:)
 real(kind = 8), allocatable         :: pnts(:,:)
-integer                             :: nCells
-integer                             :: nPnts
+type(holes)                         :: nCells
+type(holes)                         :: nPnts
 
 integer                             :: fo
 integer                             :: i
@@ -65,7 +66,7 @@ write(fo,'(",",A15)',ADVANCE="NO") "E"
 write(fo,'(",",A15)',ADVANCE="NO") "p"
 write(fo,*)
 
-do i = 1, nCells
+do i = 1, nCells % nEntry
    center = 0.25d0 * ( pnts(dir,cells(i) % pnts(1)) + pnts(dir,cells(i) % pnts(2)) &
                      + pnts(dir,cells(i) % pnts(3)) + pnts(dir,cells(i) % pnts(4)))
    write(fo,'(E15.5)'    , ADVANCE="NO") center

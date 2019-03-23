@@ -4,20 +4,21 @@ use init
 use mod_create_block
 use refinement
 use file_io
+use array_holes
 
 implicit none
-integer         , parameter         :: MAXCELLS = 50
-integer         , parameter         :: MAXPNTS  = 50
+integer         , parameter         :: MAXCELLS = 150
+integer         , parameter         :: MAXPNTS  = 250
 integer         , parameter         :: MAXLIST = MAXCELLS
 
 type(tCell), allocatable            :: cells(:)
-integer                             :: nCells
+type(holes)                         :: nCells
 
 type(tParentCell), allocatable      :: parentCells(:)
-integer                             :: nParentCells
+type(holes)                         :: nParentCells
 
 real(kind = 8), allocatable         :: pnts(:,:)
-integer                             :: nPnts
+type(holes)                         :: nPnts
 
 integer, allocatable                :: refineType(:)   ! Type of Refinement for each Cell (Global Cell index)
                                                        ! 1 = i-Ref, 2=j-Ref, 3 = both Ref
@@ -31,19 +32,11 @@ integer                             :: nCanCoarse
 integer, allocatable                :: doCoarseList(:)   ! List all Cells(Cell[first child]) to coarse
 integer                             :: nDoCoarse
 
-integer, allocatable                :: holesParentCells(:)   ! List of Holes in ParentCellsArray
-integer                             :: nHolesParentCell
-
-integer, allocatable                :: holesPnts(:)   ! List of Holes in Point Array
-integer                             :: nHolesPnt
 
 type(tFace), allocatable            :: faces(:)
-integer                             :: nFace
+type(holes)                         :: nFace
 
-integer, allocatable                :: holesFaces(:)   ! List of Holes in Point Array
-integer                             :: nHolesFace
-
-integer :: i
+integer                             :: i,j
 
 write(*,'(90("="))') 
 write(*,'(90("="))') 
@@ -60,35 +53,38 @@ allocate (refineList       (MAXLIST))
 allocate (refineType       (MAXCELLS))
 allocate (canCoarseList    (MAXCELLS))
 allocate (doCoarseList     (MAXLIST))
-allocate (holesParentCells (MAXCELLS))
-allocate (holesPnts        (MAXPNTS))
-allocate (holesFaces       (MAXCELLS))
-nFace             = 0
 nRefine           = 0
 nDoCoarse         = 0
 nCanCoarse        = 0
-nHolesParentCell  = 0
-nHolesPnt         = 0
-nHolesFace        = 0
-call create_block(4,4,cells,pnts,nCells,nPnts)
-call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
-nRefine = 1
-refineList(nRefine) = 5
-refineType(5) = 3
 
+call create_block(4,4,cells,pnts,nCells,nPnts)
+
+call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
+do j = 1,2
+nRefine = 0
+do i = 1, 5 ! nCells % nEntry 
+!do i = 5, 5
+    nRefine       = nRefine + 1
+    refineList(nRefine) = i
+    refineType(i) = 3
+end do
+
+!i = 5
+!nRefine       = 1
+!refineList(nRefine) = i
+!refineType(i) = 3
 call doRefinement (cells,parentCells,pnts,faces                      &
                   ,nCells,nParentCells,nPnts,nFace                   &
                   ,refineType,refineList,nRefine                     &
                   ,canCoarseList,nCanCoarse                          &
                   ,doCoarseList,nDoCoarse                            &
-                  ,holesParentCells,nHolesParentCell                 &
-                  ,holesPnts,nHolesPnt                               &
-                  ,holesFAces,nHolesFace                             &
                   ,.true.)
+
+end do
 
 call write_sol(cells,pnts,nCells,nPnts,"sol.dat")
 
-do i = 1, nCells
-    write(*,*) i, cells(i) % refineLevel, cells(i) % pnts, cells(i) % neigh
+do i = 1, nCells % nEntry
+    !write(*,*) i, cells(i) % refineLevel, cells(i) % pnts, cells(i) % neigh
 end do
 end program test

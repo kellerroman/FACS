@@ -33,6 +33,7 @@ program gridgen
 ! **************************************************************************************************
 use file_io
 use mod_create_block
+use array_holes
 implicit none
 
 character(len=*), parameter         :: FILENAME = "sol.dat"
@@ -43,22 +44,18 @@ integer                             :: nj = 4
 
 type(tCell), allocatable            :: cells(:)
 real(kind = 8), allocatable         :: pnts(:,:)
-integer                             :: nCells
-integer                             :: nPnts
-
-
+type(holes)                         :: nCells
+type(holes)                         :: nPnts
+integer                             :: nc,np
 
 write(*,'(A)') "Gridgen for SOD SHOCK TUBE"
 
-nCells = (ni-1) * (nj-1)
-nPnts  =  ni    *  nj
- 
-
-allocate (cells(nCells))
-allocate (pnts(2,nPnts))
-
+nc = (ni-1) * (nj-1)
+np  =  ni    *  nj
+allocate (cells(nc))
+allocate (pnts(2,np))
 call create_block(ni,nj,cells,pnts,nCells,nPnts)
-write(*,'("Grid contains ",I0," Cells and ",I0," Points")') nCells, nPnts
+write(*,'("Grid contains ",I0," Cells and ",I0," Points")') nCells % nEntry, nPnts % nEntry
 call write_sol(cells,pnts,nCells,nPnts,FILENAME)
 write(*,'(A)') "Gridgen done!"
 end program gridgen
