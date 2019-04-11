@@ -5,6 +5,7 @@ use mod_create_block
 use refinement
 use file_io
 use array_holes
+use choose
 
 implicit none
 integer         , parameter         :: MAXCELLS = 150
@@ -60,28 +61,34 @@ nCanCoarse        = 0
 call create_block(4,4,cells,pnts,nCells,nPnts)
 
 call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
-do j = 1,2
-nRefine = 0
-do i = 1, 5 ! nCells % nEntry 
-!do i = 5, 5
-    nRefine       = nRefine + 1
-    refineList(nRefine) = i
-    refineType(i) = 3
+do j = 1,7
+    nRefine = 0
+    !do i = 1, 1 ! nCells % nEntry 
+    do i = 5, 5
+        nRefine       = nRefine + 1
+        refineList(nRefine) = i
+        refineType(i) = 3
+    end do
+
+    !i = 5
+    !nRefine       = 1
+    !refineList(nRefine) = i
+    !refineType(i) = 3
+
+    call smooth_refinement(cells,refineType,refineList,nRefine)
+
+    call doRefinement (cells,parentCells,pnts,faces                      &
+                    ,nCells,nParentCells,nPnts,nFace                   &
+                    ,refineType,refineList,nRefine                     &
+                    ,canCoarseList,nCanCoarse                          &
+                    ,doCoarseList,nDoCoarse                            &
+                    ,.true.)
+
+    call check_points(pnts,nPnts)
 end do
 
-!i = 5
-!nRefine       = 1
-!refineList(nRefine) = i
-!refineType(i) = 3
-call doRefinement (cells,parentCells,pnts,faces                      &
-                  ,nCells,nParentCells,nPnts,nFace                   &
-                  ,refineType,refineList,nRefine                     &
-                  ,canCoarseList,nCanCoarse                          &
-                  ,doCoarseList,nDoCoarse                            &
-                  ,.true.)
 
-end do
-
+write(*,*) "Coarseable  CELLS ",canCoarseList(1:nCanCoarse)
 call write_sol(cells,pnts,nCells,nPnts,"sol.dat")
 
 do i = 1, nCells % nEntry

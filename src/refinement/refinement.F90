@@ -139,6 +139,11 @@ do r = 1, nDoCoarse
    end if
    
 end do
+
+call sort_refine_list(nRefine,refineList,cells)
+
+
+
 do r = 1, nRefine
    oc = refineList(r)
 
@@ -166,7 +171,7 @@ do r = 1, nRefine
       !         |       |      |
       !         |  OC   |  NC3 |          OC Original Cell
       !         |       |      |          NC1 NEW Cell
-      !      P1 |_______|______|P2        NC2 NEW Cell
+      !      P1 |_______|______| P2       NC2 NEW Cell
       !         |      P5      |          NC3 NEW Cell
       !         |  NC1  |  NC2 |
       !         |       |      |
@@ -174,18 +179,72 @@ do r = 1, nRefine
       !                P3 
       !        
       !!!!  ADD NEW POINTS
+      npc1 = cells(oc) % refineLevel(1)
+      npc2 = cells(oc) % refineLevel(2)
       do i = 1, 5
-         p(i) = nPnts % newEntry()
          select case(i)
             case(1)
-               Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(4)) ) * 0.5d0
+               nc = cells(oc) % neigh(1)
+               if (nc == NO_CELL) then
+                   npc3 = 0
+               else
+                   npc3 = cells(nc) % refineLevel(2)
+               end if
+               write(*,*) "POINTS:",oc,nc,npc2,npc3
+               if (npc3 <= npc2) then
+                  p(i) = nPnts % newEntry()
+                  Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(4)) ) * 0.5d0
+               else
+                   !nc = cells(nc) % neigh(3)
+                   p(i) = cells(nc) % pnts(2)
+               end if
             case(2)
-               Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(2)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
+               nc = cells(oc) % neigh(2)
+               if (nc == NO_CELL) then
+                   npc3 = 0
+               else
+                   npc3 = cells(nc) % refineLevel(2)
+               end if
+               write(*,*) "POINTS:",oc,nc,npc2,npc3
+               if (npc3 <= npc2) then
+                  p(i) = nPnts % newEntry()
+                  Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(2)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
+               else
+                   !nc = cells(nc) % neigh(3)
+                   p(i) = cells(nc) % pnts(1)
+               end if
             case(3)
-               Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(2)) ) * 0.5d0
+               nc = cells(oc) % neigh(3)
+               if (nc == NO_CELL) then
+                   npc3 = 0
+               else
+                   npc3 = cells(nc) % refineLevel(1)
+               end if
+               write(*,*) "POINTS:",oc,nc,npc1,npc3
+               if (npc3 <= npc1) then
+                  p(i) = nPnts % newEntry()
+                  Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(2)) ) * 0.5d0
+               else
+                   !nc = cells(nc) % neigh(2)
+                   p(i) = cells(nc) % pnts(3)
+               end if
             case(4)
-               Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(4)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
+               nc = cells(oc) % neigh(4)
+               if (nc == NO_CELL) then
+                   npc3 = 0
+               else
+                   npc3 = cells(nc) % refineLevel(1)
+               end if
+               write(*,*) "POINTS:",oc,nc,npc1,npc3
+               if (npc3 <= npc1) then
+                  p(i) = nPnts % newEntry()
+                  Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(4)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
+               else
+                   !nc = cells(nc) % neigh(2)
+                   p(i) = cells(nc) % pnts(2)
+               end if
             case(5)
+               p(i) = nPnts % newEntry()
                Pnts(:,p(i)) = cells(oc) % center(:)
          end select
          if (debug) write(*,*) "New Point:", p(i), Pnts(:,p(i))
@@ -711,102 +770,79 @@ do r = 1, nRefine
 
       ! Parent Cell
 
-      !if (nHolesParentCell > 0) then
-      !   npc1 = holesParentCells(nHolesParentCell) 
-      !   nHolesParentCell = nHolesParentCell - 1
-      !else
-      !   nParentCells = nParentCells + 1
-      !   npc1 = nParentCells
-      !end if
-      !   
-      !if (nHolesParentCell > 0) then
-      !   npc2 = holesParentCells(nHolesParentCell) 
-      !   nHolesParentCell = nHolesParentCell - 1
-      !else
-      !   nParentCells = nParentCells + 1
-      !   npc2 = nParentCells
-      !end if
-      !if (nHolesParentCell > 0) then
-      !   npc3 = holesParentCells(nHolesParentCell) 
-      !   nHolesParentCell = nHolesParentCell - 1
-      !else
-      !   nParentCells = nParentCells + 1
-      !   npc3 = nParentCells
-      !end if
-      !if (nHolesParentCell > 0) then
-      !   npc4 = holesParentCells(nHolesParentCell) 
-      !   nHolesParentCell = nHolesParentCell - 1
-      !else
-      !   nParentCells = nParentCells + 1
-      !   npc4 = nParentCells
-      !end if
-      !opc = cells(oc) % ref                      ! old parent cell
-      !parentCells(opc) % ref = NO_CELL                ! Cell has childs, thus no tin cells array anymore
-      !parentCells(opc) % cut_type = 3
-      !parentCells(opc) % child(1) = npc1
-      !parentCells(opc) % child(2) = npc2
-      !parentCells(opc) % child(3) = npc3
-      !parentCells(opc) % child(4) = npc4
-      !if (parentCells(opc) % parent == NO_CELL) then  ! Cell on first level, no need to delet an old cell 
-      !                                                ! from the list (the parent)
-      !   found = .false.
-      !else !parent can be in the list
-      !   nc = parentCells(parentCells(opc) % parent) % pos_CanCoarse
-      !   if (nc /= NO_CELL) then
-      !      canCoarseList(nc) = opc
-      !      parentCells(opc) % pos_CanCoarse = nc
-      !      parentCells(parentCells(opc) % parent) % pos_CanCoarse = NO_CELL
-      !      found = .true.
-      !   else
-      !      found = .false.
-      !   end if
-      !end if
-      !if (.not. found) then
-      !   nCanCoarse = nCanCoarse + 1 
-      !   canCoarseList(nCanCoarse) = opc
-      !   parentCells(opc) % pos_CanCoarse = nCanCoarse
-      !end if
+      npc1 = nParentCells % newEntry()
+      npc2 = nParentCells % newEntry()
+      npc3 = nParentCells % newEntry()
+      npc4 = nParentCells % newEntry()
 
-      !! 1 Child upper left
-      !parentCells(npc1) % parent   = opc
-      !parentCells(npc1) % ref      = oc                                 ! referencing
-      !cells(oc)         % ref      = npc1
-      !parentCells(npc1) % child    = NO_CELL
-      !parentCells(npc1) % refineLevel = cells(oc) % refineLevel
-      !parentCells(npc1) % neigh(1) = parentCells(opc) % neigh(1)
-      !parentCells(npc1) % neigh(2) = npc4
-      !parentCells(npc1) % neigh(3) = npc2
-      !parentCells(npc1) % neigh(4) = parentCells(opc) % neigh(4)
+      opc = cells(oc) % ref                      ! old parent cell
+      parentCells(opc) % ref = NO_CELL                ! Cell has childs, thus no tin cells array anymore
+      parentCells(opc) % cut_type = 3
+      parentCells(opc) % child(1) = npc1
+      parentCells(opc) % child(2) = npc2
+      parentCells(opc) % child(3) = npc3
+      parentCells(opc) % child(4) = npc4
 
-      !parentCells(npc2) % parent   = opc
-      !parentCells(npc2) % ref      = nc1
-      !cells(nc1)        % ref      = npc2
-      !parentCells(npc2) % child    = NO_CELL
-      !parentCells(npc2) % neigh(1) = parentCells(opc) % neigh(1)
-      !parentCells(npc2) % neigh(2) = npc3
-      !parentCells(npc2) % neigh(3) = parentCells(opc) % neigh(3)
-      !parentCells(npc2) % neigh(4) = npc1
-      !parentCells(npc2) % refineLevel = cells(oc) % refineLevel
+      if (parentCells(opc) % parent == NO_CELL) then  ! Cell on first level, no need to delet an old cell 
+                                                      ! from the list (the parent)
+         found = .false.
+      else !parent can be in the list
+         nc = parentCells(parentCells(opc) % parent) % pos_CanCoarse
+         if (nc /= NO_CELL) then
+            canCoarseList(nc) = opc
+            parentCells(opc) % pos_CanCoarse = nc
+            parentCells(parentCells(opc) % parent) % pos_CanCoarse = NO_CELL
+            found = .true.
+         else
+            found = .false.
+         end if
+      end if
+      if (.not. found) then
+         nCanCoarse = nCanCoarse + 1 
+         canCoarseList(nCanCoarse) = opc
+         parentCells(opc) % pos_CanCoarse = nCanCoarse
+      end if
 
-      !parentCells(npc3) % parent   = opc
-      !parentCells(npc3) % ref      = nc2
-      !cells(nc2)        % ref      = npc3
-      !parentCells(npc3) % child    = NO_CELL
-      !parentCells(npc3) % neigh(1) = npc2
-      !parentCells(npc3) % neigh(2) = parentCells(opc) % neigh(2)
-      !parentCells(npc3) % neigh(3) = parentCells(opc) % neigh(3)
-      !parentCells(npc3) % neigh(4) = npc4
-      !parentCells(npc3) % refineLevel = cells(oc) % refineLevel
+      ! 1 Child upper left
+      parentCells(npc1) % parent   = opc
+      parentCells(npc1) % ref      = oc                                 ! referencing
+      cells(oc)         % ref      = npc1
+      parentCells(npc1) % child    = NO_CELL
+      parentCells(npc1) % refineLevel = cells(oc) % refineLevel
+      parentCells(npc1) % neigh(1) = parentCells(opc) % neigh(1)
+      parentCells(npc1) % neigh(2) = npc4
+      parentCells(npc1) % neigh(3) = npc2
+      parentCells(npc1) % neigh(4) = parentCells(opc) % neigh(4)
 
-      !parentCells(npc4) % parent   = opc
-      !parentCells(npc4) % ref      = nc3
-      !cells(nc3)        % ref      = npc4
-      !parentCells(npc4) % child    = NO_CELL
-      !parentCells(npc4) % neigh(1) = npc1
-      !parentCells(npc4) % neigh(2) = parentCells(opc) % neigh(2)
-      !parentCells(npc4) % neigh(3) = npc3
-      !parentCells(npc4) % neigh(4) = parentCells(opc) % neigh(4)
-      !parentCells(npc4) % refineLevel = cells(oc) % refineLevel
+      parentCells(npc2) % parent   = opc
+      parentCells(npc2) % ref      = nc1
+      cells(nc1)        % ref      = npc2
+      parentCells(npc2) % child    = NO_CELL
+      parentCells(npc2) % neigh(1) = parentCells(opc) % neigh(1)
+      parentCells(npc2) % neigh(2) = npc3
+      parentCells(npc2) % neigh(3) = parentCells(opc) % neigh(3)
+      parentCells(npc2) % neigh(4) = npc1
+      parentCells(npc2) % refineLevel = cells(oc) % refineLevel
+
+      parentCells(npc3) % parent   = opc
+      parentCells(npc3) % ref      = nc2
+      cells(nc2)        % ref      = npc3
+      parentCells(npc3) % child    = NO_CELL
+      parentCells(npc3) % neigh(1) = npc2
+      parentCells(npc3) % neigh(2) = parentCells(opc) % neigh(2)
+      parentCells(npc3) % neigh(3) = parentCells(opc) % neigh(3)
+      parentCells(npc3) % neigh(4) = npc4
+      parentCells(npc3) % refineLevel = cells(oc) % refineLevel
+
+      parentCells(npc4) % parent   = opc
+      parentCells(npc4) % ref      = nc3
+      cells(nc3)        % ref      = npc4
+      parentCells(npc4) % child    = NO_CELL
+      parentCells(npc4) % neigh(1) = npc1
+      parentCells(npc4) % neigh(2) = parentCells(opc) % neigh(2)
+      parentCells(npc4) % neigh(3) = npc3
+      parentCells(npc4) % neigh(4) = parentCells(opc) % neigh(4)
+      parentCells(npc4) % refineLevel = cells(oc) % refineLevel
 
       !call check_neighbors(cells,nNewCells,pnts)
    else
@@ -920,5 +956,62 @@ do i = 1, nCells
 end do
 write(*,*) "Neighbor cells checked", nCells
 end subroutine check_neighbors
+
+subroutine check_points (pnts,nPnts,debug_in)
+implicit none
+real(kind = 8), intent (in)               :: pnts(:,:)
+
+type(holes)   , intent (in)               :: nPnts
+
+logical       , intent (in), optional     :: debug_in
+
+logical                                   :: debug
+
+integer                                   :: i,j, np
+
+if (present(debug_in)) then
+   debug = debug_in
+else
+   debug = .false.
+end if
+np = nPnts % nEntry
+do i = 1, np
+    if (debug) write(*,*) "= checking",i,pnts(:,i)
+    do j = i+1, np
+        if (debug) write(*,*) "==  with",j,pnts(:,j)
+        if (pnts(1,i) == pnts(1,j) .and. pnts(2,i) == pnts(2,j)) then
+            write(*,*) "POINTS ALREADY EXISTS"
+            write(*,*) i,j
+            write(*,*) pnts(:,i)
+            !stop 1
+        end if
+    end do
+end do
+
+end subroutine check_points
+
+subroutine sort_refine_list(nRefine,refineList,cells)
+integer, intent(in) :: nRefine
+integer, intent(inout) :: refineList(:)
+type(tCell), intent(in) :: cells(:)
+integer :: temp
+integer :: i, j
+integer :: nc
+logical :: swapped
+
+do j = nRefine-1, 1, -1
+  swapped = .false.
+  do i = 1, j
+    if (cells(refineList(i)) % refineLevel(1) > cells(refineList(i+1)) % refineLevel(1)) then
+      temp = refineList(i)
+      refineList(i) = refineList(i+1)
+      refineList(i+1) = temp
+      swapped = .true.
+    end if
+  end do
+  if (.not. swapped) exit
+end do
+
+end subroutine sort_refine_list
 
 end module refinement

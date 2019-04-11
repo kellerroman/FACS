@@ -51,6 +51,7 @@ execute_process(COMMAND
 #------------------------
 file (GLOB sources src/*.F90)
 file (GLOB src_common src/common/*.F90)
+file (GLOB src_choose src/choose/*.F90)
 file (GLOB src_init src/init/*.F90)
 file (GLOB src_ref src/refinement/*.F90)
 
@@ -83,12 +84,17 @@ add_library(refin ${src_ref})
 target_include_directories (refin  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(refin common)
 
+add_library(choose ${src_choose})
+target_include_directories (choose  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(choose common)
+
 add_executable (adapt.exe ${POST_CONFIGURE_FILE} ${sources})
 #target_link_libraries(heat.exe "${HDF5}" "${HDF5_Fortran_LIBRARIES}")
 target_link_libraries(adapt.exe "hdf5" "hdf5_fortran")
 target_link_libraries(adapt.exe common)
 target_link_libraries(adapt.exe init)
 target_link_libraries(adapt.exe refin)
+target_link_libraries(adapt.exe choose)
 
 #include_directories(${CMAKE_BINARY_DIR})
 

@@ -40,7 +40,7 @@ for i in range(nCells):
         p1 = cells[i][j]
         p2 = cells[i][(j+1) % 4]
 #        print(p1," => ",p2)
-        c.stroke(path.line(pnts[p1][0],pnts[p1][1], pnts[p2][0], pnts[p2][1]))
+        c.stroke(path.line(pnts[p1][0],pnts[p1][1], pnts[p2][0], pnts[p2][1]),[style.linewidth(0.0001)])
 
 #c.stroke(path.line(0, 0, 1, 0))
 #c.stroke(path.line(1, 0, 1, 1))
