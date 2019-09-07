@@ -10,8 +10,18 @@ enum, bind(C)
    enumerator :: LEFT=1, RIGHT, SOUTH, NORTH, FRONT, BACK 
 end enum
 
-integer         , parameter               :: NO_CELL  = 0
+! CHILD CELLS
+!  _____    __________________________
+! | 1|4 |  | NORTH_LEFT | NORTH_RIGHT | 
+! |-----|  |--------------------------|
+! | 2|3 |  | SOUTH_LEFT | SOUTH_RIGHT |
+!  -----    --------------------------
+enum, bind(C)         
+   enumerator  :: NORTH_LEFT=1, SOUTH_LEFT, SOUTH_RIGHT, NORTH_RIGHT
+end enum       
 
-integer        ,parameter                 :: PNTS_ON_FACE(2,4) = reshape([4,1,3,2,2,1,3,4],[2,4])
+integer, parameter               :: NO_CELL  = 0
+
+integer, parameter                 :: PNTS_ON_FACE(2,4) = reshape([1,4,2,3,2,1,3,4],[2,4])
 
 end module const

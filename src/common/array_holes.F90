@@ -6,9 +6,9 @@ type :: holes
     private 
     !integer :: MaxArray
     integer :: lastEntry                          ! Position where to add when no more holes 
-    integer :: nHoles                             ! Number of Holes in the Array
     integer, allocatable :: holes(:)
     integer, public :: nEntry                             ! Number of Entries (not necessary continues
+    integer, public :: nHoles                             ! Number of Holes in the Array
     contains
         procedure :: init       => holes_Init
         procedure :: newEntry => new_Entry

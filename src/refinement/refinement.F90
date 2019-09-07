@@ -23,7 +23,7 @@ type(holes)   , intent (inout)            :: nParentCells
 type(holes)   , intent (inout)            :: nPnts
 type(holes)   , intent (inout)            :: nFace
 
-integer       , intent (in)               :: refineType(:)
+integer       , intent (inout)            :: refineType(:)
 integer       , intent (inout)            :: refineList(:)
 integer       , intent (in)               :: nRefine
 
@@ -48,6 +48,7 @@ integer                                   :: i,r,nc,oc,nc1,nc2,nc3,ci
 integer                                   :: opc,npc1,npc2,npc3,npc4              ! New Parent cells
 integer                                   :: rfl,nrfl
 integer                                   :: p(5)
+integer                                   :: ocX(4)
 
 integer                                   :: mf,myFace
 integer                                   :: new_Cells(4)
@@ -91,23 +92,116 @@ end if
 !                COARSENING IN BOTH DIRECTIONS
 !           
 ! **************************************************************************************************
+if (debug) then
+    write(*,*)
+    write(*,'(90("="))') 
+    write(*,'(90("="))') 
+    write(*,*) "Coarsenin"
+    write(*,'(90("="))') 
+    write(*,'(90("="))') 
+    write(*,*)
+end if
 do r = 1, nDoCoarse
-   oc = doCoarseList(r)
+   opc  = doCoarseList(r)
+   npc1 = parentCells(opc) % child(1)
+   oc   = parentCells(npc1) % ref
+
+   do i = 1, 4
+      ocX(i) =  parentCells(parentCells(opc) % child(i)) % ref
+   end do
+   oc = ocX(1)
+
+   if (debug) write(*,*) "Coarsening Cell:",opc,"keeping:",oc
+   cells(oc) % refineLevel(:) = cells(oc) % refineLevel(:) - 1
+
+   if (debug) write(*,*) "Deleting CenterPoint:",i, cells(oc) % pnts(2)
+   call nPnts % removeEntry(cells(oc) % pnts(2))
+
+   !!  COPY POINTS FROM REFINDE CELLS TO THE NEW COARSER CELL
+   cells(oc) % pnts(1) = cells(ocX(2)) % pnts(1)
+   cells(oc) % pnts(2) = cells(ocX(3)) % pnts(2)
+   cells(oc) % pnts(3) = cells(ocX(4)) % pnts(3)
+
+   !! Update the neighbors for the new cell
+  !cells(oc) % neigh(LEFT ) = cells(ocX(1)) % neigh(LEFT )
+   cells(oc) % neigh(RIGHT) = cells(ocX(4)) % neigh(RIGHT)
+   cells(oc) % neigh(SOUTH) = cells(ocX(2)) % neigh(SOUTH)
+  !cells(oc) % neigh(NORTH) = cells(ocX(1)) % neigh(NORTH)
+
+   cells(cells(oc) % neigh(RIGHT)) % neigh(LEFT) = oc
+   cells(cells(oc) % neigh(SOUTH)) % neigh(NORTH) = oc
+
+   ! if cell left is refined, the lower cell(3) was pointing to the old cell 2
+   if (cells(ocX(SOUTH_LEFT)) % neigh(LEFT) /= cells(oc) % neigh(LEFT)) then
+       if (debug) write(*,*) "Updating Neighbor Info of cell LEFT:",cells(ocX(SOUTH_LEFT)) % neigh(LEFT)
+       cells( cells(ocX(SOUTH_LEFT)) % neigh(LEFT)) % neigh(RIGHT) = oc
+   end if
+
+   ! if cell right is refined, the lower cell(2) was pointing to the old cell 3
+   if (cells(ocX(SOUTH_RIGHT)) % neigh(RIGHT) /= cells(oc) % neigh(RIGHT)) then
+       if (debug) write(*,*) "Updating Neighbor Info of cell RIGHT:",cells(ocX(SOUTH_RIGHT)) % neigh(RIGHT)
+       cells( cells(ocX(SOUTH_RIGHT)) % neigh(RIGHT)) % neigh(LEFT) = oc
+   end if
+
+   ! if cell south is refined, the right cell(4) was pointing to the old cell 3
+   if (cells(ocX(SOUTH_RIGHT)) % neigh(SOUTH) /= cells(oc) % neigh(SOUTH)) then
+       if (debug) write(*,*) "Updating Neighbor Info of cell LEFT:",cells(ocX(SOUTH_RIGHT)) % neigh(SOUTH)
+       cells( cells(ocX(SOUTH_RIGHT)) % neigh(SOUTH)) % neigh(NORTH) = oc
+   end if
+
+   ! if cell north is refined, the right cell(3) was pointing to the old cell 4
+   if (cells(ocX(NORTH_RIGHT)) % neigh(NORTH) /= cells(oc) % neigh(NORTH)) then
+       if (debug) write(*,*) "Updating Neighbor Info of cell LEFT:",cells(ocX(NORTH_RIGHT)) % neigh(NORTH)
+       cells( cells(ocX(NORTH_RIGHT)) % neigh(NORTH)) % neigh(SOUTH) = oc
+   end if
    cells(oc) % center(:) = 0.25d0 * ( pnts(:,cells(oc) % pnts(1)) & 
                                     + pnts(:,cells(oc) % pnts(2)) & 
                                     + pnts(:,cells(oc) % pnts(3)) & 
                                     + pnts(:,cells(oc) % pnts(4)) ) 
-   npc1 = cells(oc) % ref  ! ParentCell Equivalent
-   opc  = parentCells(npc1) % parent ! Parent of the Cell, which will be new reference
-   npc2 = parentCells(opc) % parent
-   do i = 1, 4
-      !nHolesParentCell = nHolesParentCell + 1
-      !holesParentCells(nHolesParentCell) = parentCells(opc) % child(i)
+
+   nc = cells(oc)%neigh(1)
+   if (nc == NO_CELL .OR. cells(nc)% refineLevel(2) <= cells(oc) % refineLevel(2)) then
+      i = cells(ocX(2)) % pnts(4)
+      if (debug) write(*,*) "Deleting Point Left:", i 
+      call nPnts % removeEntry(i)
+   end if
+   nc = cells(oc)%neigh(2)
+   if (nc == NO_CELL .OR. cells(nc) % refineLevel(2) <= cells(oc) % refineLevel(2)) then
+      i = cells(ocX(3)) % pnts(3)
+      if (debug) write(*,*) "Deleting Point Right:", i 
+      call nPnts % removeEntry(i)
+   end if
+   nc = cells(oc)%neigh(3)
+   if (nc == NO_CELL .OR. cells(nc) % refineLevel(1) <= cells(oc) % refineLevel(1)) then
+      i = cells(ocX(2)) % pnts(2)
+      if (debug) write(*,*) "Deleting Point South:", i 
+      call nPnts % removeEntry(i)
+   end if
+   nc = cells(oc)%neigh(4)
+   if (nc == NO_CELL .OR. cells(nc) % refineLevel(1) <= cells(oc) % refineLevel(1)) then
+      i = cells(ocX(4)) % pnts(4)
+      if (debug) write(*,*) "Deleting Point North:", i 
+      call nPnts % removeEntry(i)
+   end if
+
+   do i = 2, 4
+      if (debug) write(*,*) "Deleting Cell:      ",i, ocX(i)
+      call nCells       % removeEntry(ocX(i))
    end do
+
+   do i = 1, 4
+      if (debug) write(*,*) "Deleting Parentcell:",i, parentCells(opc) % child(i)
+      call nParentCells % removeEntry(parentCells(opc) % child(i)       )
+   end do
+
+
+
+
    parentCells(opc) % child = NO_CELL
    parentCells(opc) % ref   = oc
    cells(oc) % ref          = opc
     
+   npc2 = parentCells(opc) % parent
    ! delete old parent cell from refinement
    ! If parent exist, the parent maybe can be added to the list avoiding
    ! deleting the entry
@@ -122,8 +216,6 @@ do r = 1, nDoCoarse
    else
       found = .false.
    end if
-
-   ! if parent has other children with children or doesnt exist, entry must be
    ! deleted
    ci = parentCells(opc) % pos_CanCoarse
    parentCells(opc) % pos_CanCoarse = NO_CELL
@@ -139,15 +231,26 @@ do r = 1, nDoCoarse
    end if
    
 end do
+if (debug) then
+    write(*,*)
+    write(*,'(90("="))') 
+    write(*,'(90("="))') 
+    write(*,*) " REFINING CELLS "
+    write(*,'(90("="))') 
+    write(*,'(90("="))') 
+    write(*,*)
+end if
 
 call sort_refine_list(nRefine,refineList,cells)
-
-
 
 do r = 1, nRefine
    oc = refineList(r)
 
-   if (debug) write(*,*) "Refining Cell: ",oc
+   if (debug) then
+        write(*,*) 
+        write(*,'(90("="))') 
+        write(*,*) "Refining Cell: ",oc
+   end if
 
 ! **************************************************************************************************
 !           
@@ -161,10 +264,16 @@ do r = 1, nRefine
       if (debug) then
          write(*,*) "Refining Cell in both Dirs",cells(oc) % refineLevel
 
-         write(*,'(30("="),9X,"New Cells: ",3(I0,1X))') nc1,nc2,nc3
-         write(*,'("Old Neigh:",4(1X,I0,"(",I0,1X,I0,")"))') (cells(oc) % neigh(nc),  &
-            cells(cells(oc) % neigh(nc)) % refineLevel(1), &
-            cells(cells(oc) % neigh(nc)) % refineLevel(2),nc=1,4)
+         write(*,'(" New Cells: ",3(I0,1X))') nc1,nc2,nc3
+         do nc = 1, 4
+            if (cells(oc) % neigh(nc) /= NO_CELL) then
+                write(*,'(" Old Neigh@",A1,4(1X,I0,"(",I0,1X,I0,")"))') FACE_NAME_SHORT(nc),cells(oc) % neigh(nc),  &
+                                                                    cells(cells(oc) % neigh(nc)) % refineLevel(1), &
+                                                                    cells(cells(oc) % neigh(nc)) % refineLevel(2)
+            else
+                write(*,'(" Old Neigh@",A1," EMPTY"))') FACE_NAME_SHORT(nc)
+            end if
+        end do
       end if
       !
       !          ______P4______
@@ -263,23 +372,27 @@ do r = 1, nRefine
       cells(nc1) % pnts(3) = p(5)
       cells(nc1) % pnts(4) = p(1)
       cells(nc1) % refineLevel(:) = cells(oc) % refineLevel(:) + 1
+      refineType(nc1) = 0 
 
       cells(nc2) % pnts(1) = p(3)
       cells(nc2) % pnts(2) = cells(oc) % pnts(2)
       cells(nc2) % pnts(3) = p(2)
       cells(nc2) % pnts(4) = p(5)
       cells(nc2) % refineLevel(:) = cells(oc) % refineLevel(:) + 1
+      refineType(nc2) = 0 
 
       cells(nc3) % pnts(1) = p(5)
       cells(nc3) % pnts(2) = p(2)
       cells(nc3) % pnts(3) = cells(oc) % pnts(3)
       cells(nc3) % pnts(4) = p(4)
       cells(nc3) % refineLevel(:) = cells(oc) % refineLevel(:) + 1
+      refineType(nc3) = 0 
 
       cells(oc ) % pnts(1) = p(1)
       cells(oc ) % pnts(2) = p(5)
       cells(oc ) % pnts(3) = p(4)
       cells(oc ) % refineLevel(:) = cells(oc) % refineLevel(:) + 1
+      refineType(oc) = 0 
       ! neighbor LEFT
 
       nc = cells(oc) % neigh(1)
@@ -856,6 +969,19 @@ write(*,'("Number of Cells/Parents/Points       : ",I0,2("/",I0))') nNewCells &
                                                                   , nParentCells%nEntry &
                                                                   , nPnts % nEntry
 !write(*,'("Number of Holes Parent/Pnt           : ",I0,"/",I0)') nHolesParentCell,nHolesPnt
+
+if (nCells % nHoles > 0 ) then
+    write(*,*) "Still holes in Cells Array"
+    stop 1
+end if
+if (nPnts % nHoles > 0 ) then
+    write(*,*) "Still holes in Points Array"
+    stop 1
+end if
+if (nParentCells % nHoles > 0 ) then
+    write(*,*) "Still holes in Parentcells Array"
+    stop 1
+end if
 end subroutine doRefinement
 
 subroutine check_neighbors (cells,nCells,pnts,debug_in)
@@ -876,37 +1002,20 @@ if (present(debug_in)) then
 else
    debug = .false.
 end if
+if (debug) write(*,'(180("="))') 
 do i = 1, nCells
+   if (debug) write(*,*) "Working on Cell:", i
    do n = 1, 4                ! over all dircetions (neighbors)
+    
+        
       if (cells(i) % neigh(n) == NO_CELL) cycle
       ni = cells(i) % neigh(n)    ! neighbor index
+      if (debug) write(*,*) "Neighbor @",FACE_NAME_SHORT(n),ni
       nn = n + mod(n,2)*2-1       ! neighbor Direction
-      if (n == 1) then
-         ip1 = cells(i) % pnts(1)
-         ip2 = cells(i) % pnts(4)
-      else if (n == 2) then
-         ip1 = cells(i) % pnts(2)
-         ip2 = cells(i) % pnts(3)
-      else if (n == 3) then
-         ip1 = cells(i) % pnts(2)
-         ip2 = cells(i) % pnts(1)
-      else
-         ip1 = cells(i) % pnts(3)
-         ip2 = cells(i) % pnts(4)
-      end if
-      if (nn == 1) then
-         inp1 = cells(ni) % pnts(1)
-         inp2 = cells(ni) % pnts(4)
-      else if (nn == 2) then
-         inp1 = cells(ni) % pnts(2)
-         inp2 = cells(ni) % pnts(3)
-      else if (nn == 3) then
-         inp1 = cells(ni) % pnts(2)
-         inp2 = cells(ni) % pnts(1)
-      else
-         inp1 = cells(ni) % pnts(3)
-         inp2 = cells(ni) % pnts(4)
-      end if
+      ip1 = cells(i) % pnts(PNTS_ON_FACE(1,n))
+      ip2 = cells(i) % pnts(PNTS_ON_FACE(2,n))
+      inp1 = cells(ni) % pnts(PNTS_ON_FACE(1,nn))
+      inp2 = cells(ni) % pnts(PNTS_ON_FACE(2,nn))
       p2(:)  = pnts(:,ip2)
       np2(:) = pnts(:,inp2)
       if (cells(ni) % refineLevel(1) == cells(i) % refineLevel(1) .and. &
@@ -930,11 +1039,17 @@ do i = 1, nCells
             np1(:) = (pnts(:,inp1) + pnts(:,inp2) ) * 0.5d0
          end if
       else
-         !write(*,*) "Different ref Level not  yet supp", i,ni
-         !write(*,*) "Cell:", i, "NEIGHBOR", ni, "Direction", n
-         !write(*,*) cells(i) % refineLevel, cells(ni) % refineLevel
-         !write(*,*) pnts(:,i)
-         !stop 1
+          write(*,*)
+         write(*,'(90("="))')
+         write(*,'(90("="))')
+         write(*,'(10(" "),A)') "Error in CHECK_NEIGHBOR"
+         write(*,'(90("="))')
+         write(*,'(90("="))')
+          write(*,*)
+         write(*,*) "Cell:", i, "NEIGHBOR", ni, "Direction: ", FACE_NAME_SHORT(n)
+         write(*,*) cells(i) % refineLevel, cells(ni) % refineLevel
+         write(*,*) pnts(:,i)
+         stop 1
          cycle
       end if
       if (abs(p1(1) - np1(1)) > EPSI .or. &
@@ -955,19 +1070,26 @@ do i = 1, nCells
    end do
 end do
 write(*,*) "Neighbor cells checked", nCells
+if (debug) write(*,'(180("="))') 
 end subroutine check_neighbors
 
-subroutine check_points (pnts,nPnts,debug_in)
+subroutine check_points (pnts,nPnts,cells,nCells,debug_in)
 implicit none
 real(kind = 8), intent (in)               :: pnts(:,:)
 
 type(holes)   , intent (in)               :: nPnts
 
+type(tCell)   , intent (in)               :: cells(:)
+
+type(holes)   , intent (in)               :: nCells
+
 logical       , intent (in), optional     :: debug_in
 
 logical                                   :: debug
 
-integer                                   :: i,j, np
+integer                                   :: i,j, np, nc, c, cp
+
+logical                                   :: pnt_is_used
 
 if (present(debug_in)) then
    debug = debug_in
@@ -975,6 +1097,7 @@ else
    debug = .false.
 end if
 np = nPnts % nEntry
+nc = nCells % nEntry
 do i = 1, np
     if (debug) write(*,*) "= checking",i,pnts(:,i)
     do j = i+1, np
@@ -986,6 +1109,21 @@ do i = 1, np
             !stop 1
         end if
     end do
+    ! checking for connected cells
+    pnt_is_used = .false.
+    do c = 1, nc
+        do cp = 1, 4
+           if (cells(c) % Pnts(cp) == i) then
+               pnt_is_used = .true.
+               exit
+           end if
+        end do
+        if (pnt_is_used) exit
+    end do
+    if (.NOT. pnt_is_used) then
+        write(*,*) "Point not used in cell", i
+        stop 1
+    end if
 end do
 
 end subroutine check_points
@@ -1011,6 +1149,7 @@ do j = nRefine-1, 1, -1
   end do
   if (.not. swapped) exit
 end do
+write(*,*) refineList(1:nRefine)
 
 end subroutine sort_refine_list
 

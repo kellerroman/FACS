@@ -1,4 +1,4 @@
-program test
+module unittest_environment
 use types
 use init
 use mod_create_block
@@ -6,10 +6,9 @@ use refinement
 use file_io
 use array_holes
 use choose
-
 implicit none
-integer         , parameter         :: MAXCELLS = 150
-integer         , parameter         :: MAXPNTS  = 250
+integer         , parameter         :: MAXCELLS = 5000
+integer         , parameter         :: MAXPNTS  = 5000
 integer         , parameter         :: MAXLIST = MAXCELLS
 
 type(tCell), allocatable            :: cells(:)
@@ -36,15 +35,9 @@ integer                             :: nDoCoarse
 
 type(tFace), allocatable            :: faces(:)
 type(holes)                         :: nFace
-
-integer                             :: i,j
-
-write(*,'(90("="))') 
-write(*,'(90("="))') 
-write(*,'( 3("="),10X,A)') "UNIT TEST NO REFINEMENT"
-write(*,'(90("="))') 
-write(*,'(90("="))') 
-
+contains
+subroutine ut_init()
+implicit none
 allocate (cells(MAXCELLS))
 allocate (parentCells(MAXCELLS))
 allocate (pnts(2,MAXPNTS))
@@ -57,41 +50,19 @@ allocate (doCoarseList     (MAXLIST))
 nRefine           = 0
 nDoCoarse         = 0
 nCanCoarse        = 0
+refineType        = 0
+end subroutine ut_init
 
-call create_block(4,4,cells,pnts,nCells,nPnts)
+subroutine ut_cleanup()
+implicit none
+deallocate (cells)
+deallocate (parentCells)
+deallocate (pnts)
+deallocate (faces)
 
-call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
-do j = 1,7
-    nRefine = 0
-    !do i = 1, 1 ! nCells % nEntry 
-    do i = 5, 5
-        nRefine       = nRefine + 1
-        refineList(nRefine) = i
-        refineType(i) = 3
-    end do
-
-    !i = 5
-    !nRefine       = 1
-    !refineList(nRefine) = i
-    !refineType(i) = 3
-
-    call smooth_refinement(cells,refineType,refineList,nRefine)
-
-    call doRefinement (cells,parentCells,pnts,faces                      &
-                    ,nCells,nParentCells,nPnts,nFace                   &
-                    ,refineType,refineList,nRefine                     &
-                    ,canCoarseList,nCanCoarse                          &
-                    ,doCoarseList,nDoCoarse                            &
-                    ,.true.)
-
-    call check_points(pnts,nPnts)
-end do
-
-
-write(*,*) "Coarseable  CELLS ",canCoarseList(1:nCanCoarse)
-call write_sol(cells,pnts,nCells,nPnts,"sol.dat")
-
-do i = 1, nCells % nEntry
-    !write(*,*) i, cells(i) % refineLevel, cells(i) % pnts, cells(i) % neigh
-end do
-end program test
+deallocate (refineList)
+deallocate (refineType)
+deallocate (canCoarseList)
+deallocate (doCoarseList)
+end subroutine ut_cleanup
+end module

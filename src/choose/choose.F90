@@ -68,7 +68,7 @@ end subroutine choose_cells
 !!!!! This routine ensures  that there is no bigger difference in refinment level than 1
 subroutine smooth_refinement(cells,refineType,refineList,nRefine)
 implicit none
-type(tCell)   , intent (inout)            :: cells(:)
+type(tCell)   , intent (in)               :: cells(:)
 integer       , intent (inout)            :: refineType(:)
 integer       , intent (inout)            :: refineList(:)
 integer       , intent (inout)            :: nRefine
@@ -77,9 +77,11 @@ integer                                   :: i,d,n,ni,ci
 ci = 1
 do while (ci <= nRefine)
    i = refineList(ci)
+   !write(*,*) "checking for cell",i
    do n = 1, 4
-      if (cells(i) % neigh(n) == 0) cycle
       ni = cells(i) % neigh(n)
+      if (ni == NO_CELL) cycle
+      !write(*,*) "===>",ni,cells(i) % refineLevel, cells(ni) % refineLevel
       do d = 1, 2
          if (cells(i) % refineLevel(d) > cells(ni) % refineLevel(d)) then
             if (refineType(ni) <= 0) then
@@ -146,10 +148,10 @@ do i = 1, nCanCoarse
       if (.not. doCoarse) exit
    end do
    if (doCoarse) then
-      cc = parentCells(pc) % child(1)
-      c = parentCells(cc) % ref
+      !cc = parentCells(pc) % child(1)
+      !c = parentCells(cc) % ref
       nDoCoarse = nDoCoarse + 1
-      doCoarseList(nDoCoarse) = c
+      doCoarseList(nDoCoarse) = pc
       !write(*,*) "Combined:",c,"ParentCell:",cc,"ParentsParent:",pc, nDoCoarse, parentCells(pc) % pos_CanCoarse,i
       !write(*,*) cells(c) % neigh
    end if

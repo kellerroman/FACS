@@ -1,0 +1,176 @@
+module ut_refi
+    use pfunit_mod
+    use unittest_environment
+    
+contains
+
+    @before 
+    subroutine do_at_start()
+        implicit none
+        call ut_init()
+
+        call create_block(4,4,cells,pnts,nCells,nPnts)
+
+        call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
+        write(*,*) "Hey Ho Lets go!"
+    end subroutine do_at_start
+
+    @after 
+    subroutine do_at_end()
+        implicit none
+        write(*,*) "Aus und vorbei"
+        call ut_cleanup()
+    end subroutine do_at_end
+
+    @test
+    subroutine test_prerequisits()
+        integer                             :: i
+        i = nCells % nEntry
+        @assertEqual( 9, i, message="Number Of Cells") 
+        i = nPnts % nEntry
+        @assertEqual(16, i, message="Number Of Points") 
+    end subroutine test_prerequisits
+
+    @test
+    subroutine test_refinement_once()
+        integer                             :: i,j
+        nRefine   = 0
+        nDoCoarse = 0
+        do i = 1, nCells % nEntry ,2
+            nRefine       = nRefine + 1
+            refineList(nRefine) = i
+            refineType(i) = 3
+        end do
+
+        @assertEqual(5,nRefine,message="Number of Cells to Refine")
+
+        !call smooth_refinement(cells,refineType,refineList,nRefine)
+
+        call doRefinement (cells,parentCells,pnts,faces                      &
+                        ,nCells,nParentCells,nPnts,nFace                   &
+                        ,refineType,refineList,nRefine                     &
+                        ,canCoarseList,nCanCoarse                          &
+                        ,doCoarseList,nDoCoarse                            &
+                        ,.true.)
+
+        call check_points(pnts,nPnts,cells,nCells)
+        call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+        i = nCells % nEntry
+        @assertEqual( 24, i, message="Number Of Cells") 
+        i = nPnts % nEntry
+        @assertEqual( 41, i, message="Number Of Points") 
+        call write_sol(cells,pnts,nCells,nPnts,"sol.dat")
+    end subroutine test_refinement_once
+
+    @test
+    subroutine test_refinement_twice()
+        implicit none
+        integer                             :: i,j
+        do j = 1,2
+            nRefine   = 0
+            nDoCoarse = 0
+            if ( j == 1 ) then
+                do i = 1, nCells % nEntry ,2
+                    nRefine       = nRefine + 1
+                    refineList(nRefine) = i
+                    refineType(i) = 3
+                end do
+            else 
+                nRefine       = nRefine + 1
+                i = 1
+                refineList(nRefine) = i
+                refineType(i) = 3
+            end if
+
+            call smooth_refinement(cells,refineType,refineList,nRefine)
+
+            if ( j == 2 ) then
+                @assertEqual(2,nRefine,message="Number of Cells to Refine")
+            end if
+            call doRefinement (cells,parentCells,pnts,faces                      &
+                            ,nCells,nParentCells,nPnts,nFace                   &
+                            ,refineType,refineList,nRefine                     &
+                            ,canCoarseList,nCanCoarse                          &
+                            ,doCoarseList,nDoCoarse                            &
+                            ,.true.)
+
+            call check_points(pnts,nPnts,cells,nCells)
+            call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+        end do
+        i = nCells % nEntry
+        @assertEqual( 30, i, message="Number Of Cells") 
+        i = nPnts % nEntry
+        @assertEqual( 48, i, message="Number Of Points") 
+    end subroutine test_refinement_twice
+
+    @test
+    subroutine test_refinement_multi()
+        integer                             :: i,j
+        do j = 1,4
+            !write(*,'(90("="))') 
+            nRefine   = 0
+            nDoCoarse = 0
+            do i = 1, nCells % nEntry ,2
+                nRefine       = nRefine + 1
+                refineList(nRefine) = i
+                refineType(i) = 3
+            end do
+
+            call smooth_refinement(cells,refineType,refineList,nRefine)
+
+            call doRefinement (cells,parentCells,pnts,faces                      &
+                            ,nCells,nParentCells,nPnts,nFace                   &
+                            ,refineType,refineList,nRefine                     &
+                            ,canCoarseList,nCanCoarse                          &
+                            ,doCoarseList,nDoCoarse                            &
+                            ,.true.)
+
+            call check_points(pnts,nPnts,cells,nCells)
+            call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+        end do
+
+        call write_sol(cells,pnts,nCells,nPnts,"sol.dat") 
+
+    end subroutine test_refinement_multi
+
+    @test
+    subroutine test_refinement_coarse()
+        integer                             :: i,j
+        do j = 1,1
+            !write(*,'(90("="))') 
+            nRefine   = 0
+            nDoCoarse = 0
+            if (j == 1) then
+                do i = 1, nCells % nEntry ,2
+                    nRefine       = nRefine + 1
+                    refineList(nRefine) = i
+                    refineType(i) = 3
+                end do
+            else
+                nDoCoarse = 1
+                doCoarseList(nDoCoarse) = 5
+                i = 1
+                nRefine       = nRefine + 1
+                refineList(nRefine) = i
+                refineType(i) = 3
+            end if
+
+            call smooth_refinement(cells,refineType,refineList,nRefine)
+
+            call doRefinement (cells,parentCells,pnts,faces                      &
+                            ,nCells,nParentCells,nPnts,nFace                   &
+                            ,refineType,refineList,nRefine                     &
+                            ,canCoarseList,nCanCoarse                          &
+                            ,doCoarseList,nDoCoarse                            &
+                            ,.true.)
+
+            call check_points(pnts,nPnts,cells,nCells)
+            call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+            !write(*,*) "Coarseable  CELLS ",canCoarseList(1:nCanCoarse)
+        end do
+
+        !call write_sol(cells,pnts,nCells,nPnts,"sol.dat")
+
+    end subroutine test_refinement_coarse
+
+end module ut_refi
