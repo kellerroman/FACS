@@ -14,4 +14,6 @@ write(*,*) ar%newEntry()
 call ar%removeEntry(60)
 write(*,*) ar%nEntry
 write(*,*) ar%newEntry()
+
+call ar%removeEntry(101)
 end program test

@@ -6,28 +6,46 @@
 #    Start: 20.01.2019
 #     Last: 20.01.2019
 #--------------------------------------------
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.13)
 project (ADAPT
          VERSION 0.0.1
          LANGUAGES Fortran)
 enable_language (Fortran)
 
+option(CODE_COVERAGE "Enable coverage reporting" OFF)
+option(PFUNIT "ON - using pFUnit for unit tests, OFF - skip building unit tests" OFF)
+
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 #---------------------
 # Set up the compiler
 #---------------------
-# set (CMAKE_Fortran_COMPILER gfortran)
+set (CMAKE_Fortran_COMPILER gfortran)
 
 # set the preporcessor directives for compilation
 # set (PREPROC_DIRECTIVES "-DVERBOSE")
 # set Compiler Directives to use with every BUILD_TYPE
 # set (GLOBAL_FLAGS "-std=f2008 -ffree-form -Wall -Wextra -Wconversion -Warray-temporaries -Wimplicit-interface -Wsurprising")
 # set the compiler flags -ffree-line-length-130
+# set (CMAKE_Fortran_FLAGS_DEBUG   "${PREPROC_DIRECTIVES} ${GLOBAL_FLAGS} -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check -g -O0 -fprofile-arcs -ftest-coverage ")
+
+# set (CMAKE_Fortran_FLAGS_DEBUG   "${PREPROC_DIRECTIVES} ${GLOBAL_FLAGS} -O0 -fprofile-arcs -ftest-coverage")
+
 # set (CMAKE_Fortran_FLAGS_RELEASE "${PREPROC_DIRECTIVES} ${GLOBAL_FLAGS} -O3")
 # set (CMAKE_Fortran_FLAGS_DEBUG   "${PREPROC_DIRECTIVES} ${GLOBAL_FLAGS} -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check -g -O0")
-#set (CMAKE_BUILD_TYPE Debug)
+# set (CMAKE_BUILD_TYPE Debug)
 # set (CMAKE_BUILD_TYPE Release)
 
+add_library(coverage_config INTERFACE)
+
+if(CODE_COVERAGE)
+  # Add required flags (GCC & LLVM/Clang)
+  target_compile_options(coverage_config INTERFACE
+    -O0        # no optimization
+    -g         # generate debug info
+    --coverage # sets all required flags
+  )
+  target_link_options(coverage_config INTERFACE --coverage)
+endif(CODE_COVERAGE)
 # the commit's SHA1, and whether the building workspace was dirty or not
 execute_process(COMMAND
   "${GIT_EXECUTABLE}" describe --match=NeVeRmAtCh --always --abbrev=40 --dirty --tags
@@ -64,8 +82,6 @@ file (GLOB src_ref src/refinement/*.F90)
 # set(HDF5_ROOT $ENV{HDF5_HOME})
 # find_package(HDF5 REQUIRED)
 
-find_package(pFUnit REQUIRED)
-enable_testing()
 
 # include_directories(${HDF5_INCLUDE_DIRS})
 
@@ -104,5 +120,10 @@ target_link_libraries(adapt.exe choose)
 
 #include_directories(${CMAKE_BINARY_DIR})
 
+
 add_subdirectory(tools)
-add_subdirectory(test)
+if (${PFUNIT})
+    find_package(pFUnit REQUIRED)
+    enable_testing()
+    add_subdirectory(test)
+endif()

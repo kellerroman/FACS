@@ -1,0 +1,32 @@
+module ut_array_holes
+use pfunit_mod
+use array_holes
+
+implicit none
+contains
+    @test
+    subroutine Init()
+        type(holes) :: ar
+        call ar%init(100)
+        @assertEqual( 100, ar%nEntry, message="Initial Number Of Cells") 
+        @assertEqual( 0, ar%nHoles, message="Initial Number Of Holes") 
+
+        call ar%removeEntry(100)
+        @assertEqual( 99, ar%nEntry, message="Number Of Cells after Delete at End") 
+        @assertEqual( 0, ar%nHoles, message=" Number Of Holes after Delete at End") 
+
+        @assertEqual( 100, ar%newEntry(), message="New Entry at End") 
+        call ar%removeEntry(60)
+        @assertEqual( 99, ar%nEntry, message="Number Of Cells after Delete in Middle") 
+        @assertEqual( 1, ar%nHoles, message=" Number Of Holes after Delete in Middle") 
+
+        @assertEqual( 60, ar%newEntry(), message="New Entry in Middle") 
+    end subroutine Init
+
+@test(ifdef=INCLUDE_INTENTIONALLY_BROKEN)
+    subroutine DeleteOutOfBounds()
+        type(holes) :: ar
+        call ar%init(100)
+        call ar%removeEntry(101)
+    end subroutine DeleteOutOfBounds
+end module
