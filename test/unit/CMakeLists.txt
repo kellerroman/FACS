@@ -20,4 +20,4 @@ set_target_properties (unittest_environment PROPERTIES
 
 # add_subdirectory(3x3)
 add_subdirectory(array_holes)
-# add_subdirectory(refine)
+add_subdirectory(refine)

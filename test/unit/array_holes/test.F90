@@ -15,5 +15,6 @@ call ar%removeEntry(60)
 write(*,*) ar%nEntry
 write(*,*) ar%newEntry()
 
+! leads to an error, but 100% code coverage
 call ar%removeEntry(101)
 end program test

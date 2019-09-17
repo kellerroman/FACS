@@ -29,7 +29,112 @@ contains
         @assertEqual( 9, i, message="Number Of Cells") 
         i = nPnts % nEntry
         @assertEqual(16, i, message="Number Of Points") 
+        i = nParentCells % nEntry
+        @assertEqual( 9, i, message="Number Of ParentCells") 
     end subroutine test_prerequisits
+
+    @test
+    subroutine test_refinement_1()
+        integer                             :: i
+        nRefine   = 1
+        nDoCoarse = 0
+        i = 5
+        refineList(nRefine) = i
+        refineType(i) = 3
+
+        call doRefinement (cells,parentCells,pnts,faces                      &
+                          ,nCells,nParentCells,nPnts,nFace                   &
+                          ,refineType,refineList,nRefine                     &
+                          ,canCoarseList,nCanCoarse                          &
+                          ,doCoarseList,nDoCoarse                            &
+                          ,.true.)
+
+        call check_points(pnts,nPnts,cells,nCells)
+        call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+        i = nCells % nEntry
+        @assertEqual( 12, i, message="Number Of Cells") 
+        i = nPnts % nEntry
+        @assertEqual( 21, i, message="Number Of Points") 
+        i = nParentCells % nEntry
+        @assertEqual( 13, i, message="Number Of ParentCells") 
+        call write_sol(cells,pnts,nCells,nPnts,"sol_1.dat")
+    end subroutine test_refinement_1
+
+    @test
+    subroutine test_refinement_2()
+        integer                             :: i
+        nRefine   = 1
+        nDoCoarse = 0
+        i = 4
+        refineList(nRefine) = i
+        refineType(i) = 3
+
+        call doRefinement (cells,parentCells,pnts,faces                      &
+                          ,nCells,nParentCells,nPnts,nFace                   &
+                          ,refineType,refineList,nRefine                     &
+                          ,canCoarseList,nCanCoarse                          &
+                          ,doCoarseList,nDoCoarse                            &
+                          ,.false.)
+        i = 5
+        refineList(nRefine) = i
+        refineType(i) = 3
+
+        call doRefinement (cells,parentCells,pnts,faces                      &
+                          ,nCells,nParentCells,nPnts,nFace                   &
+                          ,refineType,refineList,nRefine                     &
+                          ,canCoarseList,nCanCoarse                          &
+                          ,doCoarseList,nDoCoarse                            &
+                          ,.true.)
+
+        call check_points(pnts,nPnts,cells,nCells)
+        call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+        i = nCells % nEntry
+        @assertEqual( 15, i, message="Number Of Cells") 
+        i = nPnts % nEntry
+        @assertEqual( 25, i, message="Number Of Points") 
+        i = nParentCells % nEntry
+        @assertEqual( 17, i, message="Number Of ParentCells") 
+
+        call write_sol(cells,pnts,nCells,nPnts,"sol_2.dat")
+    end subroutine test_refinement_2
+
+    @test
+    subroutine test_refinement_3()
+        integer                             :: i
+        nRefine   = 1
+        nDoCoarse = 0
+        i = 6
+        refineList(nRefine) = i
+        refineType(i) = 3
+
+        call doRefinement (cells,parentCells,pnts,faces                      &
+                          ,nCells,nParentCells,nPnts,nFace                   &
+                          ,refineType,refineList,nRefine                     &
+                          ,canCoarseList,nCanCoarse                          &
+                          ,doCoarseList,nDoCoarse                            &
+                          ,.false.)
+        i = 5
+        refineList(nRefine) = i
+        refineType(i) = 3
+
+        call doRefinement (cells,parentCells,pnts,faces                      &
+                          ,nCells,nParentCells,nPnts,nFace                   &
+                          ,refineType,refineList,nRefine                     &
+                          ,canCoarseList,nCanCoarse                          &
+                          ,doCoarseList,nDoCoarse                            &
+                          ,.true.)
+
+        call check_points(pnts,nPnts,cells,nCells)
+        call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+        i = nCells % nEntry
+        @assertEqual( 15, i, message="Number Of Cells") 
+        i = nPnts % nEntry
+        @assertEqual( 25, i, message="Number Of Points") 
+        i = nParentCells % nEntry
+        @assertEqual( 17, i, message="Number Of ParentCells") 
+
+        call write_sol(cells,pnts,nCells,nPnts,"sol_3.dat")
+    end subroutine test_refinement_3
 
     @test
     subroutine test_refinement_once()
