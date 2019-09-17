@@ -380,10 +380,10 @@ contains
     @test
     subroutine test_move_point()
         integer                             :: i
-        i = nCells % nEntry + 1
-        call move_cell(cells, parentCells, 1, i)
-        call move_cell(cells, parentCells, 2, 1)
-        call move_cell(cells, parentCells, i, 2)
+        i = nPnts % nEntry + 1
+        call move_point(cells, nCells % nEntry, pnts, 1, i)
+        call move_point(cells, nCells % nEntry, pnts, 9, 1)
+        call move_point(cells, nCells % nEntry, pnts, i, 9)
         call check_points(pnts,nPnts,cells,nCells)
         call check_neighbors(cells,nCells%nEntry,pnts,.false.)
 

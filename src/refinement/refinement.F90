@@ -971,17 +971,22 @@ write(*,'("Number of Cells/Parents/Points       : ",I0,2("/",I0))') nNewCells &
 !write(*,'("Number of Holes Parent/Pnt           : ",I0,"/",I0)') nHolesParentCell,nHolesPnt
 
 if (nCells % nHoles > 0 ) then
-    write(*,*) "Still holes in Cells Array"
+    write(*,*) "Still holes in Cells Array", nCells % nHoles
     do i = 1, nCells % nHoles
        nc1 = nCells % removeLast()
        nc2 = nCells % newEntry()
        call move_cell(cells, parentCells, nc1, nc2)
-       write(*,*) "MOVING FROM ", nc1," TO ", nc2
+       write(*,*) "MOVING CELL FROM ", nc1," TO ", nc2
     end do
 end if
 if (nPnts % nHoles > 0 ) then
-    write(*,*) "Still holes in Points Array"
-    stop 1
+    write(*,*) "Still holes in Points Array", nPnts % nHoles
+    do i = 1, nPnts % nHoles
+       nc1 = nPnts % removeLast()
+       nc2 = nPnts % newEntry()
+       call move_point(cells, nCells % nEntry, pnts, nc1, nc2)
+       write(*,*) "MOVING POINT FROM ", nc1," TO ", nc2
+    end do
 end if
 if (nParentCells % nHoles > 0 ) then
     write(*,*) "Still holes in Parentcells Array"
@@ -1191,5 +1196,23 @@ do i = 1, 4
 end do
 
 end subroutine move_cell
+
+subroutine move_point(cells,nCells,pnts,from,to)
+type(tCell), intent(inout) :: cells(:)
+real(kind = 8), intent (inout)            :: pnts(:,:)
+integer, intent(in) :: nCells, from, to
+
+
+integer :: i,n
+
+pnts(:,to) = pnts(:,from)
+
+do i = 1, nCells
+    do n = 1, 4
+        if (cells(i) % pnts(n) == from) cells(i) % pnts(n) = to
+    end do
+end do
+
+end subroutine move_point
 
 end module refinement
