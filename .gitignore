@@ -13,3 +13,4 @@ inc_Makefile_*
 src/git_version.h
 tags
 build/
+compile_commands.json
