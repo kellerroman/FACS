@@ -41,7 +41,7 @@ implicit none
 allocate (cells(MAXCELLS))
 allocate (parentCells(MAXCELLS))
 allocate (pnts(2,MAXPNTS))
-allocate (faces(MAXCELLS ))
+allocate (faces(MAXCELLS*2))
 
 allocate (refineList       (MAXLIST))
 allocate (refineType       (MAXCELLS))
