@@ -23,6 +23,7 @@ integer                                            :: fi
 
 open(newunit = fi,file=trim(filename))
 
+read(fi,'(A)')
 read(fi,'(I9,1X,I9,1X,I3)') read_cells, read_pnts, i
 call nCells % init(read_cells)
 call nPnts  % init(read_pnts)
@@ -52,29 +53,36 @@ else
    end if
 end if
 
+read(fi,'(A)')
 do i = 1, read_pnts
    read (fi,'(10X,3(1X,ES12.5))') pnts(:,i)
 end do
 
+read(fi,'(A)')
 do i = 1, read_cells
    read (fi,'(10X,4(1X,I9))') cells(i) % pnts
 end do
 
+read(fi,'(A)')
 do i = 1, read_cells
    read (fi,'(10X,4(1X,I9))') cells(i) % neigh
 end do
 
+read(fi,'(A)')
 do i = 1, read_cells
    read (fi,'(10X,3(1X,I9))') cells(i) % refineLevel
 end do
 
+read(fi,'(A)')
 do i = 1, read_cells
    read (fi,'(10X,1(1X,ES12.5))') cells(i) % Q
 end do
 
+read(fi,'(A)')
 do i = 1, read_cells
    read (fi,'(10X,2(1X,ES12.5))') cells(i) % grad
 end do
+read(fi,'(A)')
 close(fi)
 end subroutine read_sol
 
@@ -95,27 +103,34 @@ if (present(iter)) then
 else
    open(newunit = fi,file=trim(filename))
 end if
-
+write(fi,'(A9,1X,A9,1X,A)') "#Cells", "#Points", "QDIM"
 write(fi,'(I9,1X,I9,1X,I3)') nCells%nEntry, nPnts%nEntry, Q_DIM
 
+write(fi,'(" === POINTS === ")')
 do i = 1, nPnts % nEntry
       write (fi,'(I9,":",3(1X,ES12.5))') i , pnts(:,i)
 end do
+write(fi,'(" === POINTS TO CELL === ")')
 do i = 1, nCells % nEntry
    write (fi,'(I9,":",4(1X,I9))') i, cells(i) % pnts
 end do
+write(fi,'(" === CELL NEIGHBOR === ")')
 do i = 1, nCells % nEntry
    write (fi,'(I9,":",4(1X,I9))') i,cells(i) % neigh
 end do
+write(fi,'(" === CELL REFINEMENT LEVEL === ")')
 do i = 1, nCells % nEntry
    write (fi,'(I9,":",2(1X,I9))') i,cells(i) % refineLevel
 end do
+write(fi,'(" === CELL Q VALUE === ")')
 do i = 1, nCells % nEntry
    write (fi,'(I9,":",1(1X,ES12.5))') i,cells(i) % Q
 end do
+write(fi,'(" === CELL GRADIENTS === ")')
 do i = 1, nCells % nEntry
    write (fi,'(I9,":",2(1X,ES12.5))') i,cells(i) % grad
 end do
+write(fi,'(" === END === ")')
 close(fi)
 end subroutine write_sol
 end module file_io
