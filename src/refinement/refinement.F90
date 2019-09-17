@@ -299,7 +299,7 @@ do r = 1, nRefine
                else
                    npc3 = cells(nc) % refineLevel(2)
                end if
-               write(*,*) "POINTS:",oc,nc,npc2,npc3
+               ! write(*,*) "POINTS:",oc,nc,npc2,npc3
                if (npc3 <= npc2) then
                   p(i) = nPnts % newEntry()
                   Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(4)) ) * 0.5d0
@@ -314,7 +314,7 @@ do r = 1, nRefine
                else
                    npc3 = cells(nc) % refineLevel(2)
                end if
-               write(*,*) "POINTS:",oc,nc,npc2,npc3
+               ! write(*,*) "POINTS:",oc,nc,npc2,npc3
                if (npc3 <= npc2) then
                   p(i) = nPnts % newEntry()
                   Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(2)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
@@ -329,7 +329,7 @@ do r = 1, nRefine
                else
                    npc3 = cells(nc) % refineLevel(1)
                end if
-               write(*,*) "POINTS:",oc,nc,npc1,npc3
+               ! write(*,*) "POINTS:",oc,nc,npc1,npc3
                if (npc3 <= npc1) then
                   p(i) = nPnts % newEntry()
                   Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(1)) + Pnts(:,cells(oc) % pnts(2)) ) * 0.5d0
@@ -344,7 +344,7 @@ do r = 1, nRefine
                else
                    npc3 = cells(nc) % refineLevel(1)
                end if
-               write(*,*) "POINTS:",oc,nc,npc1,npc3
+               ! write(*,*) "POINTS:",oc,nc,npc1,npc3
                if (npc3 <= npc1) then
                   p(i) = nPnts % newEntry()
                   Pnts(:,p(i)) = ( Pnts(:,cells(oc) % pnts(4)) + Pnts(:,cells(oc) % pnts(3)) ) * 0.5d0
@@ -1039,13 +1039,13 @@ do i = 1, nCells
             np1(:) = (pnts(:,inp1) + pnts(:,inp2) ) * 0.5d0
          end if
       else
-          write(*,*)
+         write(*,*)
          write(*,'(90("="))')
          write(*,'(90("="))')
          write(*,'(10(" "),A)') "Error in CHECK_NEIGHBOR"
          write(*,'(90("="))')
          write(*,'(90("="))')
-          write(*,*)
+         write(*,*)
          write(*,*) "Cell:", i, "NEIGHBOR", ni, "Direction: ", FACE_NAME_SHORT(n)
          write(*,*) cells(i) % refineLevel, cells(ni) % refineLevel
          write(*,*) pnts(:,i)
@@ -1069,8 +1069,9 @@ do i = 1, nCells
 
    end do
 end do
+! write(*,'(90("="))')
 write(*,*) "Neighbor cells checked", nCells
-if (debug) write(*,'(180("="))') 
+! write(*,'(90("="))')
 end subroutine check_neighbors
 
 subroutine check_points (pnts,nPnts,cells,nCells,debug_in)
@@ -1106,7 +1107,7 @@ do i = 1, np
             write(*,*) "POINTS ALREADY EXISTS"
             write(*,*) i,j
             write(*,*) pnts(:,i)
-            !stop 1
+            stop 1
         end if
     end do
     ! checking for connected cells
@@ -1149,7 +1150,7 @@ do j = nRefine-1, 1, -1
   end do
   if (.not. swapped) exit
 end do
-write(*,*) refineList(1:nRefine)
+! write(*,*) refineList(1:nRefine)
 
 end subroutine sort_refine_list
 
