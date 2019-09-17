@@ -144,13 +144,13 @@ end do
 !do i = 1, nc
 !   write(fo,*) cells(i) % refineLevel(2)
 !end do
-!
-!write(fo,"(A)") 'SCALARS Cell_Number int'
-!write(fo,"(A)") 'LOOKUP_TABLE Default'
-!do i = 1, nc
-!   write(fo,*) i
-!end do
-!
+
+write(fo,"(A)") 'SCALARS Cell_Number int'
+write(fo,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, nc
+  write(fo,*) i
+end do
+
 !write(fo,"(A)") 'SCALARS Neighbor_1_LEFT int'
 !write(fo,"(A)") 'LOOKUP_TABLE Default'
 !do i = 1, nc

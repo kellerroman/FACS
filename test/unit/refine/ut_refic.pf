@@ -130,44 +130,46 @@ contains
 
     end subroutine test_refinement_multi
 
-    ! @test
-    ! subroutine test_refinement_coarse()
-    !     integer                             :: i,j
-    !     do j = 1,1
-    !         !write(*,'(90("="))') 
-    !         nRefine   = 0
-    !         nDoCoarse = 0
-    !         if (j == 1) then
-    !             do i = 1, nCells % nEntry ,2
-    !                 nRefine       = nRefine + 1
-    !                 refineList(nRefine) = i
-    !                 refineType(i) = 3
-    !             end do
-    !         else
-    !             nDoCoarse = 1
-    !             doCoarseList(nDoCoarse) = 5
-    !             i = 1
-    !             nRefine       = nRefine + 1
-    !             refineList(nRefine) = i
-    !             refineType(i) = 3
-    !         end if
-    !
-    !         call smooth_refinement(cells,refineType,refineList,nRefine)
-    !
-    !         call doRefinement (cells,parentCells,pnts,faces                      &
-    !                         ,nCells,nParentCells,nPnts,nFace                   &
-    !                         ,refineType,refineList,nRefine                     &
-    !                         ,canCoarseList,nCanCoarse                          &
-    !                         ,doCoarseList,nDoCoarse                            &
-    !                         ,.false.)
-    !
-    !         call check_points(pnts,nPnts,cells,nCells)
-    !         call check_neighbors(cells,nCells%nEntry,pnts,.false.)
-    !         !write(*,*) "Coarseable  CELLS ",canCoarseList(1:nCanCoarse)
-    !     end do
-    !
-    !     !call write_sol(cells,pnts,nCells,nPnts,"sol.dat")
-    !
-    ! end subroutine test_refinement_coarse
+    @test
+    subroutine test_refinement_coarse()
+        integer                             :: i,j
+        do j = 1,2
+            !write(*,'(90("="))') 
+            nRefine   = 0
+            nDoCoarse = 0
+            if (j == 1) then
+                do i = 1, nCells % nEntry ,2
+                    nRefine       = nRefine + 1
+                    refineList(nRefine) = i
+                    refineType(i) = 3
+                end do
+            else
+                nDoCoarse = 1
+                doCoarseList(nDoCoarse) = 5
+                ! Refine in order to prevent holes
+                ! i = 1
+                ! nRefine       = nRefine + 1
+                ! refineList(nRefine) = i
+                ! refineType(i) = 3
+            end if
+
+            call smooth_refinement(cells,refineType,refineList,nRefine)
+
+            call doRefinement (cells,parentCells,pnts,faces                      &
+                            ,nCells,nParentCells,nPnts,nFace                   &
+                            ,refineType,refineList,nRefine                     &
+                            ,canCoarseList,nCanCoarse                          &
+                            ,doCoarseList,nDoCoarse                            &
+                            ,.false.)
+
+            call check_points(pnts,nPnts,cells,nCells)
+            call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+            !write(*,*) "Coarseable  CELLS ",canCoarseList(1:nCanCoarse)
+            call write_sol(cells,pnts,nCells,nPnts,"sol_coarse.dat")
+        end do
+
+        !call write_sol(cells,pnts,nCells,nPnts,"sol.dat")
+
+    end subroutine test_refinement_coarse
 
 end module ut_refic

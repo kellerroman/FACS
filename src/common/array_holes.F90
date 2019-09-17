@@ -13,6 +13,7 @@ type :: holes
         procedure :: init       => holes_Init
         procedure :: newEntry => new_Entry
         procedure :: removeEntry => remove_Entry
+        procedure :: removeLast => remove_Last
 end type
 
 contains
@@ -32,6 +33,14 @@ function new_Entry(this) result(nId)
    end if
 end function new_Entry
 
+function remove_Last(this) result (le)
+    implicit none
+    Class(holes), intent(inout) :: this
+    integer :: le
+    le = this % lastEntry
+    call remove_Entry(this,this % lastEntry)
+end function remove_Last
+
 subroutine remove_entry(this,id)
     implicit none
     Class(holes), intent(inout) :: this
@@ -41,7 +50,7 @@ subroutine remove_entry(this,id)
     if (id == this % lastEntry) then
         this % lastEntry = this % lastEntry - 1
     else if (id > this % lastEntry) then
-        write(*,*) "Array does not exist"
+        write(*,*) "Array Value does not exist"
         stop 1
     else
         this % nHoles = this % nHoles + 1

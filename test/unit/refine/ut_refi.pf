@@ -12,13 +12,11 @@ contains
         call create_block(4,4,cells,pnts,nCells,nPnts)
 
         call init_sol(cells,parentCells,pnts,faces,nCells,nParentCells,nFace)
-        write(*,*) "Hey Ho Lets go!"
     end subroutine do_at_start
 
     @after 
     subroutine do_at_end()
         implicit none
-        write(*,*) "Aus und vorbei"
         call ut_cleanup()
     end subroutine do_at_end
 
@@ -336,4 +334,59 @@ contains
         call write_sol(cells,pnts,nCells,nPnts,"sol_8.dat")
     end subroutine test_refinement_8
 
+    @test
+    subroutine test_move_cell_hom()
+        integer                             :: i
+        i = nCells % nEntry + 1
+        call move_cell(cells, parentCells, 1, i)
+        call move_cell(cells, parentCells, 2, 1)
+        call move_cell(cells, parentCells, i, 2)
+        call check_points(pnts,nPnts,cells,nCells)
+        call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+
+        i = parentCells(1) % ref
+        @assertEqual( 2, i, message="Parent Cell Reference") 
+        call write_sol(cells,pnts,nCells,nPnts,"sol_move_cell_hom.dat")
+    end subroutine test_move_cell_hom
+
+    @test
+    subroutine test_move_cell_inhom()
+        integer                             :: i
+        nRefine   = 0
+        nDoCoarse = 0
+        i = 1; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
+        ! i = 3; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
+        ! i = 7; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
+        ! i = 9; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
+
+        call doRefinement (cells,parentCells,pnts,faces                      &
+                          ,nCells,nParentCells,nPnts,nFace                   &
+                          ,refineType,refineList,nRefine                     &
+                          ,canCoarseList,nCanCoarse                          &
+                          ,doCoarseList,nDoCoarse                            &
+                          ,.false.)
+        i = nCells % nEntry + 1
+        call move_cell(cells, parentCells, 1, i)
+        call move_cell(cells, parentCells, 2, 1)
+        call move_cell(cells, parentCells, i, 2)
+        call check_points(pnts,nPnts,cells,nCells)
+        call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+
+        ! i = parentCells(1) % ref
+        ! @assertEqual( 2, i, message="Parent Cell Reference") 
+        call write_sol(cells,pnts,nCells,nPnts,"sol_move_cell_inhom.dat")
+    end subroutine test_move_cell_inhom
+
+    @test
+    subroutine test_move_point()
+        integer                             :: i
+        i = nCells % nEntry + 1
+        call move_cell(cells, parentCells, 1, i)
+        call move_cell(cells, parentCells, 2, 1)
+        call move_cell(cells, parentCells, i, 2)
+        call check_points(pnts,nPnts,cells,nCells)
+        call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+
+        call write_sol(cells,pnts,nCells,nPnts,"sol_move_point.dat")
+    end subroutine test_move_point
 end module ut_refi

@@ -474,9 +474,9 @@ do r = 1, nRefine
                faces(myFace) % stencil(1,2) = nc1
 
                mf = cells(nc1) % nFace + 1
-               cells(nc1) % faces_dir_ref(LEFT)   = .true.
-               cells(nc1) % faces_dir    (LEFT,1) = myFace
-               cells(nc1) % f_sign(mf) = -1.0d0
+               ! cells(nc1) % faces_dir_ref(LEFT)   = .true.
+               ! cells(nc1) % faces_dir    (LEFT,1) = myFace
+               ! cells(nc1) % f_sign(mf) = -1.0d0
 
                !modify Right face 1 face of LEFT LOWER neighbor cell
                nc   = cells(nc) % neigh(SOUTH) !! get RIGHT neighbor
@@ -484,11 +484,11 @@ do r = 1, nRefine
                faces(myFace) % stencil(1,2) = nc1
 
                ! number of faces in new cell 
-               mf = cells(nc1) % nFace + 1
-               cells(nc1) % nFace = mf
-               cells(nc1) % faces(mf) = myFace
-               cells(nc1) % faces_dir    (LEFT,2) = myFace
-               cells(nc1) % f_sign(mf) = -1.0d0
+               ! mf = cells(nc1) % nFace + 1
+               ! cells(nc1) % nFace = mf
+               ! cells(nc1) % faces(mf) = myFace
+               ! cells(nc1) % faces_dir    (LEFT,2) = myFace
+               ! cells(nc1) % f_sign(mf) = -1.0d0
             else
                write(*,*) "Neighbor LEFT: Second Neighbor: refinement level not supported" &
                    ,__LINE__,__FILE__
@@ -536,12 +536,12 @@ do r = 1, nRefine
                myFace = cells(nc) % faces_dir(RIGHT,1)
                faces(myFace) % stencil(1,2) = nc1
 
-               mf = cells(nc1) % nFace + 1
-               cells(nc1) % nFace = mf
-               cells(nc1) % faces(mf) = myFace
-               cells(nc1) % faces_dir_ref(LEFT)   = .true.
-               cells(nc1) % faces_dir    (LEFT,1) = myFace
-               cells(nc1) % f_sign(mf) = -1.0d0
+               ! mf = cells(nc1) % nFace + 1
+               ! cells(nc1) % nFace = mf
+               ! cells(nc1) % faces(mf) = myFace
+               ! cells(nc1) % faces_dir_ref(LEFT)   = .true.
+               ! cells(nc1) % faces_dir    (LEFT,1) = myFace
+               ! cells(nc1) % f_sign(mf) = -1.0d0
 
             else if (nrfl == rfl+1) then ! CASE 5
 !
@@ -566,12 +566,12 @@ do r = 1, nRefine
                myFace = cells(nc) % faces_dir(RIGHT,1)
                faces(myFace) % stencil(1,2) = nc1
 
-               mf = cells(nc1) % nFace + 1
-               cells(nc1) % nFace = mf
-               cells(nc1) % faces(mf) = myFace
-               cells(nc1) % faces_dir_ref(LEFT)   = .true.
-               cells(nc1) % faces_dir    (LEFT,1) = myFace
-               cells(nc1) % f_sign(mf) = -1.0d0
+               ! mf = cells(nc1) % nFace + 1
+               ! cells(nc1) % nFace = mf
+               ! cells(nc1) % faces(mf) = myFace
+               ! cells(nc1) % faces_dir_ref(LEFT)   = .true.
+               ! cells(nc1) % faces_dir    (LEFT,1) = myFace
+               ! cells(nc1) % f_sign(mf) = -1.0d0
 
                !modify Right face 1 face of LEFT LOWER neighbor cell
                nc   = cells(nc) % neigh(SOUTH) !! get SOUTH neighbor
@@ -579,11 +579,11 @@ do r = 1, nRefine
                faces(myFace) % stencil(1,2) = nc1
 
                ! number of faces in new cell 
-               mf = cells(nc1) % nFace + 1
-               cells(nc1) % nFace = mf
-               cells(nc1) % faces(mf) = myFace
-               cells(nc1) % faces_dir    (LEFT,2) = myFace
-               cells(nc1) % f_sign(mf) = -1.0d0
+               ! mf = cells(nc1) % nFace + 1
+               ! cells(nc1) % nFace = mf
+               ! cells(nc1) % faces(mf) = myFace
+               ! cells(nc1) % faces_dir    (LEFT,2) = myFace
+               ! cells(nc1) % f_sign(mf) = -1.0d0
             else
                write(*,*) "Neighbor West: Second Neighbor RFL/=: refinement level not supported" &
                    ,__LINE__,__FILE__
@@ -602,12 +602,12 @@ do r = 1, nRefine
          if (debug) write(*,*) nc1,"setting left neighbor to", nc
          myFace = cells(oc) % faces_dir(RIGHT,1)
 
-         mf = cells(nc1) % nFace + 1
-         cells(nc1) % nFace = mf
-         cells(nc1) % faces(mf) = myFace
-         cells(nc1) % faces_dir_ref(LEFT)   = .true.
-         cells(nc1) % faces_dir    (LEFT,1) = myFace
-         cells(nc1) % f_sign(mf) = -1.0d0
+         ! mf = cells(nc1) % nFace + 1
+         ! cells(nc1) % nFace = mf
+         ! cells(nc1) % faces(mf) = myFace
+         ! cells(nc1) % faces_dir_ref(LEFT)   = .true.
+         ! cells(nc1) % faces_dir    (LEFT,1) = myFace
+         ! cells(nc1) % f_sign(mf) = -1.0d0
       end if
 
       ! NEIGHBOR RIGHT
@@ -972,7 +972,12 @@ write(*,'("Number of Cells/Parents/Points       : ",I0,2("/",I0))') nNewCells &
 
 if (nCells % nHoles > 0 ) then
     write(*,*) "Still holes in Cells Array"
-    stop 1
+    do i = 1, nCells % nHoles
+       nc1 = nCells % removeLast()
+       nc2 = nCells % newEntry()
+       call move_cell(cells, parentCells, nc1, nc2)
+       write(*,*) "MOVING FROM ", nc1," TO ", nc2
+    end do
 end if
 if (nPnts % nHoles > 0 ) then
     write(*,*) "Still holes in Points Array"
@@ -1153,5 +1158,38 @@ end do
 ! write(*,*) refineList(1:nRefine)
 
 end subroutine sort_refine_list
+
+subroutine move_cell(cells,parentCells,from,to)
+type(tCell), intent(inout) :: cells(:)
+type(tParentCell), intent(inout) :: parentCells(:)
+integer, intent(in) :: from, to
+
+
+integer :: i,j,k,n,n2
+
+! cells(to) % pnts = cells(from) % pnts
+! cells(to) % neigh = cells(from) % neigh
+! cells(to) % refineLevel = cells(from) % refineLevel
+! cells(to) % ref = cells(from) % ref
+
+cells(to) = cells(from)
+parentCells(cells(to) % ref) % ref = to
+
+do i = 1, 4
+    n = cells(to) % neigh(i)
+    do j = 1, 4
+        if (cells(n) % neigh(j) == from) cells(n) % neigh(j) = to
+    end do
+    if (cells(n) % refineLevel(1) > cells(to) % refineLevel(1)) then
+        do j = 1, 4
+            n2 = cells(n) % neigh(j)
+            do k = 1, 4
+                if (cells(n2) % neigh(k) == from) cells(n2) % neigh(k) = to
+            end do
+        end do
+    end if
+end do
+
+end subroutine move_cell
 
 end module refinement
