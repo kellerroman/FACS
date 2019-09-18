@@ -127,17 +127,17 @@ do i = 1, nc
    write(fo,*) cells(i) % Q(4)
 end do
 
-write(fo,"(A)") 'SCALARS GradX double'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nc
-   write(fo,*) cells(i) % grad(1,1)
-end do
-
-write(fo,"(A)") 'SCALARS GradY double'
-write(fo,"(A)") 'LOOKUP_TABLE Default'
-do i = 1, nc
-   write(fo,*) cells(i) % grad(2,1)
-end do
+! write(fo,"(A)") 'SCALARS GradX double'
+! write(fo,"(A)") 'LOOKUP_TABLE Default'
+! do i = 1, nc
+!    write(fo,*) cells(i) % grad(1,1)
+! end do
+!
+! write(fo,"(A)") 'SCALARS GradY double'
+! write(fo,"(A)") 'LOOKUP_TABLE Default'
+! do i = 1, nc
+!    write(fo,*) cells(i) % grad(2,1)
+! end do
 
 !write(fo,"(A)") 'SCALARS Refinement_Level_J int'
 !write(fo,"(A)") 'LOOKUP_TABLE Default'

@@ -979,18 +979,25 @@ if (nCells % nHoles > 0 ) then
        write(*,*) "MOVING CELL FROM ", nc1," TO ", nc2
     end do
 end if
+if (nParentCells % nHoles > 0 ) then
+    write(*,*) "Still holes in Parentcells Array"
+    do i = 1, nParentCells % nHoles
+       nc1 = nParentCells % removeLast()
+       nc2 = nParentCells % newEntry()
+       call move_parentcell(cells, parentCells, canCoarseList, nc1, nc2)
+       write(*,*) "MOVING POINT FROM ", nc1," TO ", nc2
+    end do
+end if
 if (nPnts % nHoles > 0 ) then
     write(*,*) "Still holes in Points Array", nPnts % nHoles
     do i = 1, nPnts % nHoles
        nc1 = nPnts % removeLast()
        nc2 = nPnts % newEntry()
-       call move_point(cells, nCells % nEntry, pnts, nc1, nc2)
+       call move_point(cells, nCells % nEntry,  &
+                       parentCells, nParentCells % nEntry, &
+                       pnts, nc1, nc2)
        write(*,*) "MOVING POINT FROM ", nc1," TO ", nc2
     end do
-end if
-if (nParentCells % nHoles > 0 ) then
-    write(*,*) "Still holes in Parentcells Array"
-    stop 1
 end if
 end subroutine doRefinement
 
@@ -1172,11 +1179,6 @@ integer, intent(in) :: from, to
 
 integer :: i,j,k,n,n2
 
-! cells(to) % pnts = cells(from) % pnts
-! cells(to) % neigh = cells(from) % neigh
-! cells(to) % refineLevel = cells(from) % refineLevel
-! cells(to) % ref = cells(from) % ref
-
 cells(to) = cells(from)
 parentCells(cells(to) % ref) % ref = to
 
@@ -1197,10 +1199,11 @@ end do
 
 end subroutine move_cell
 
-subroutine move_point(cells,nCells,pnts,from,to)
+subroutine move_point(cells,nCells,parentCells, nParentCells, pnts,from,to)
 type(tCell), intent(inout) :: cells(:)
+type(tParentCell), intent(inout) :: parentCells(:)
 real(kind = 8), intent (inout)            :: pnts(:,:)
-integer, intent(in) :: nCells, from, to
+integer, intent(in) :: nCells, nParentCells, from, to
 
 
 integer :: i,n
@@ -1209,10 +1212,65 @@ pnts(:,to) = pnts(:,from)
 
 do i = 1, nCells
     do n = 1, 4
-        if (cells(i) % pnts(n) == from) cells(i) % pnts(n) = to
+        if (cells(i) % pnts(n) == from) then
+            cells(i) % pnts(n) = to
+            parentCells(cells(i) % ref) % pnts(n) = to
+        end if
     end do
+end do
+do i = 1, nParentCells
+    ! only need to check parent cells if thei habe children
+    ! otherwise they are updated in the Cell loop
+    if (parentCells(i) % child(1) /= NO_CELL ) then
+        do n = 1, 4
+            if (cells(i) % pnts(n) == from) then
+                cells(i) % pnts(n) = to
+                parentCells(cells(i) % ref) % pnts(n) = to
+            end if
+        end do
+    end if
 end do
 
 end subroutine move_point
 
+subroutine move_parentcell(cells,parentCells,canCoarseList,from,to)
+type(tCell), intent(inout) :: cells(:)
+type(tParentCell), intent(inout) :: parentCells(:)
+integer       , intent (inout)            :: canCoarseList(:)
+integer, intent(in) :: from, to
+
+
+integer :: i,j,k,n,n2
+
+parentCells(to) = parentCells(from)
+cells(parentCells(to) % ref) % ref = to
+
+! update parent, if it exists
+i = parentCells(to) % parent
+if (i /= NO_CELL) then
+    do j = 1, 4
+        if (parentCells(i) % child(j) == from) parentCells(i) % child(j) = to
+    end do
+end if
+i = parentCells(to) % pos_CanCoarse
+if (i /= NO_CELL) then
+    canCoarseList(i) = to
+end if
+
+do i = 1, 4
+    n = parentCells(to) % neigh(i)
+    do j = 1, 4
+        if (parentCells(n) % neigh(j) == from) parentCells(n) % neigh(j) = to
+    end do
+    if (parentCells(n) % refineLevel(1) > parentCells(to) % refineLevel(1)) then
+        do j = 1, 4
+            n2 = parentCells(n) % neigh(j)
+            do k = 1, 4
+                if (parentCells(n2) % neigh(k) == from) parentCells(n2) % neigh(k) = to
+            end do
+        end do
+    end if
+end do
+
+end subroutine move_parentcell
 end module refinement

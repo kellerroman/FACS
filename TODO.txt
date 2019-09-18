@@ -1,20 +1,28 @@
-REFINEMENT FACES
+- fully unrefine:
+    --@test subroutine test_refinement_coarse() in ut_refic without refine in 2nd run
+    --Remove holes in parent cells: can coarse list update
 
-fully refinement:
+- include pfUnit into repo with subrepo
 
-4 internal faces
+- include parentCells into file
 
-lower-left:
-   new face with cell NORTH (sibling)
-   new face with cell RIGHT (sibling)
-   new face                if left neighbor has lower level
-   change stencil of face  if left neighbor has same level
+- REFINEMENT FACES
 
-lower-right:
-   new face                if lower neighbor has lower level
-   change stencil of face  if lower neighbor has same level
-   new face                if right neighbor has lower level
-   change stencil of face  if right neighbor has same level
+  fully refinement:
 
-upper-right:
-   
+  4 internal faces
+
+  lower-left:
+     new face with cell NORTH (sibling)
+     new face with cell RIGHT (sibling)
+     new face                if left neighbor has lower level
+     change stencil of face  if left neighbor has same level
+
+  lower-right:
+     new face                if lower neighbor has lower level
+     change stencil of face  if lower neighbor has same level
+     new face                if right neighbor has lower level
+     change stencil of face  if right neighbor has same level
+
+  upper-right:
+

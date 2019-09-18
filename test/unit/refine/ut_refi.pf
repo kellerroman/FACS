@@ -381,12 +381,46 @@ contains
     subroutine test_move_point()
         integer                             :: i
         i = nPnts % nEntry + 1
-        call move_point(cells, nCells % nEntry, pnts, 1, i)
-        call move_point(cells, nCells % nEntry, pnts, 9, 1)
-        call move_point(cells, nCells % nEntry, pnts, i, 9)
+        call move_point(cells, nCells % nEntry, parentCells, nParentCells % nEntry, pnts, 1, i)
+        call move_point(cells, nCells % nEntry, parentCells, nParentCells % nEntry, pnts, 9, 1)
+        call move_point(cells, nCells % nEntry, parentCells, nParentCells % nEntry, pnts, i, 9)
         call check_points(pnts,nPnts,cells,nCells)
         call check_neighbors(cells,nCells%nEntry,pnts,.false.)
 
         call write_sol(cells,pnts,nCells,nPnts,"sol_move_point.dat")
     end subroutine test_move_point
+
+    @test
+    subroutine test_move_parentcell_inhom()
+        integer                             :: i
+        nRefine   = 0
+        nDoCoarse = 0
+        i = 1; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
+        ! i = 3; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
+        ! i = 7; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
+        ! i = 9; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
+
+        call doRefinement (cells,parentCells,pnts,faces                      &
+                          ,nCells,nParentCells,nPnts,nFace                   &
+                          ,refineType,refineList,nRefine                     &
+                          ,canCoarseList,nCanCoarse                          &
+                          ,doCoarseList,nDoCoarse                            &
+                          ,.false.)
+        i = nCells % nEntry + 1
+        call move_parentcell(cells, parentCells, canCoarseList, 1, i)
+        call move_parentcell(cells, parentCells, canCoarseList, 2, 1)
+        call move_parentcell(cells, parentCells, canCoarseList, i, 2)
+        call check_points(pnts,nPnts,cells,nCells)
+        call check_neighbors(cells,nCells%nEntry,pnts,.false.)
+
+        i = parentCells(1) % ref
+        @assertEqual( 2, i, message="Parent Cell Reference") 
+        i = parentCells(1) % Child(1)
+        @assertEqual( NO_CELL, i, message="Parent Cell 1 should have no children") 
+        i = nCanCoarse
+        @assertEqual( 1, i, message="Cells that can be coarsed") 
+        i = canCoarseList(1)
+        @assertEqual( 2, i, message="Cells that can be coarsed") 
+        call write_sol(cells,pnts,nCells,nPnts,"sol_move_parentcell_inhom.dat")
+    end subroutine test_move_parentcell_inhom
 end module ut_refi

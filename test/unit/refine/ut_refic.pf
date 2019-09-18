@@ -137,16 +137,23 @@ contains
             !write(*,'(90("="))') 
             nRefine   = 0
             nDoCoarse = 0
-            if (j == 1) then
+            if (mod(j,2) == 1) then
                 do i = 1, nCells % nEntry ,2
                     nRefine       = nRefine + 1
                     refineList(nRefine) = i
                     refineType(i) = 3
                 end do
+                ! i = 5
+                ! nRefine       = nRefine + 1
+                ! refineList(nRefine) = i
+                ! refineType(i) = 3
             else
-                nDoCoarse = 1
-                doCoarseList(nDoCoarse) = 5
+                do i = 1, nCanCoarse
+                    nDoCoarse = nDoCoarse + 1
+                    doCoarseList(nDoCoarse) = canCoarseList(i)
+                end do
                 ! Refine in order to prevent holes
+
                 ! i = 1
                 ! nRefine       = nRefine + 1
                 ! refineList(nRefine) = i
