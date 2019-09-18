@@ -101,6 +101,7 @@ if (debug) then
     write(*,'(90("="))') 
     write(*,*)
 end if
+call sort_unrefine_list(nDoCoarse,doCoarseList,parentCells)
 do r = 1, nDoCoarse
    opc  = doCoarseList(r)
    npc1 = parentCells(opc) % child(1)
@@ -972,31 +973,31 @@ write(*,'("Number of Cells/Parents/Points       : ",I0,2("/",I0))') nNewCells &
 
 if (nCells % nHoles > 0 ) then
     write(*,*) "Still holes in Cells Array", nCells % nHoles
-    do i = 1, nCells % nHoles
+    do 
        nc1 = nCells % removeLast()
        nc2 = nCells % newEntry()
        call move_cell(cells, parentCells, nc1, nc2)
-       write(*,*) "MOVING CELL FROM ", nc1," TO ", nc2
+       if (nCells % nHoles == 0) exit
     end do
 end if
 if (nParentCells % nHoles > 0 ) then
-    write(*,*) "Still holes in Parentcells Array"
-    do i = 1, nParentCells % nHoles
+    write(*,*) "Still holes in Parentcells Array: ", nParentCells % nHoles
+    do 
        nc1 = nParentCells % removeLast()
        nc2 = nParentCells % newEntry()
        call move_parentcell(cells, parentCells, canCoarseList, nc1, nc2)
-       write(*,*) "MOVING POINT FROM ", nc1," TO ", nc2
+       if (nParentCells % nHoles == 0) exit
     end do
 end if
 if (nPnts % nHoles > 0 ) then
     write(*,*) "Still holes in Points Array", nPnts % nHoles
-    do i = 1, nPnts % nHoles
+    do 
        nc1 = nPnts % removeLast()
        nc2 = nPnts % newEntry()
        call move_point(cells, nCells % nEntry,  &
                        parentCells, nParentCells % nEntry, &
                        pnts, nc1, nc2)
-       write(*,*) "MOVING POINT FROM ", nc1," TO ", nc2
+       if (nPnts % nHoles == 0) exit
     end do
 end if
 end subroutine doRefinement
@@ -1012,6 +1013,7 @@ logical       , intent (in), optional     :: debug_in
 
 logical                                   :: debug
 
+logical                                   :: error
 integer                                   :: i,n,ni,nn,ip1,ip2,inp1,inp2
 real(kind = 8)                            :: p1(2), np1(2), p2(2) , np2(2)
 if (present(debug_in)) then
@@ -1019,6 +1021,7 @@ if (present(debug_in)) then
 else
    debug = .false.
 end if
+ error = .false.
 if (debug) write(*,'(180("="))') 
 do i = 1, nCells
    if (debug) write(*,*) "Working on Cell:", i
@@ -1058,22 +1061,22 @@ do i = 1, nCells
       else
          write(*,*)
          write(*,'(90("="))')
-         write(*,'(90("="))')
          write(*,'(10(" "),A)') "Error in CHECK_NEIGHBOR"
-         write(*,'(90("="))')
          write(*,'(90("="))')
          write(*,*)
          write(*,*) "Cell:", i, "NEIGHBOR", ni, "Direction: ", FACE_NAME_SHORT(n)
          write(*,*) cells(i) % refineLevel, cells(ni) % refineLevel
          write(*,*) pnts(:,i)
-         stop 1
+         error = .true.
          cycle
       end if
       if (abs(p1(1) - np1(1)) > EPSI .or. &
           abs(p1(2) - np1(2)) > EPSI .or. &
           abs(p2(1) - np2(1)) > EPSI .or. &
           abs(p2(2) - np2(2)) > EPSI ) then
-         write(*,*) "Neighbor Connection is wrong"
+         write(*,'(90("="))')
+         write(*,'(10(" "),A)') "Neighbor Connection is wrong"
+         write(*,'(90("="))')
          write(*,*) "Connection from",i,"to",ni,"Direction", n
          write(*,*) "Refinement Level",cells(i) % refineLevel, cells(ni) % refineLevel
          write(*,*) "      MyCell:",i, "Neighbor:",cells(i) % neigh
@@ -1081,13 +1084,14 @@ do i = 1, nCells
          write(*,*) "NeighborCell:",ni,"Neighbor:",cells(ni) % neigh
          write(*,*) np1,np2
          write(*,*) nCells
-         stop 1
+         error = .true.
       end if
 
    end do
 end do
-! write(*,'(90("="))')
 write(*,*) "Neighbor cells checked", nCells
+if (error) stop 1
+! write(*,'(90("="))')
 ! write(*,'(90("="))')
 end subroutine check_neighbors
 
@@ -1170,6 +1174,30 @@ end do
 ! write(*,*) refineList(1:nRefine)
 
 end subroutine sort_refine_list
+
+subroutine sort_unrefine_list(nDoCoarse,doCoarseList,cells)
+integer, intent(in) :: nDoCoarse
+integer, intent(inout) :: doCoarseList(:)
+type(tParentCell), intent(in) :: cells(:)
+integer :: temp
+integer :: i, j
+integer :: nc
+logical :: swapped
+
+do j = nDoCoarse-1, 1, -1
+  swapped = .false.
+  do i = 1, j
+  if (cells(doCoarseList(i)) % refineLevel(1) < cells(doCoarseList(i+1)) % refineLevel(1)) then
+      temp = doCoarseList(i)
+      doCoarseList(i) = doCoarseList(i+1)
+      doCoarseList(i+1) = temp
+      swapped = .true.
+    end if
+  end do
+  if (.not. swapped) exit
+end do
+
+end subroutine sort_unrefine_list
 
 subroutine move_cell(cells,parentCells,from,to)
 type(tCell), intent(inout) :: cells(:)
