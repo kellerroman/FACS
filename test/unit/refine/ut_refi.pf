@@ -396,9 +396,6 @@ contains
         nRefine   = 0
         nDoCoarse = 0
         i = 1; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
-        ! i = 3; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
-        ! i = 7; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
-        ! i = 9; nRefine=nRefine+1; refineList(nRefine) = i; refineType(i) = 3
 
         call doRefinement (cells,parentCells,pnts,faces                      &
                           ,nCells,nParentCells,nPnts,nFace                   &

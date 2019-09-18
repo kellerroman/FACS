@@ -1,7 +1,3 @@
-- fully unrefine:
-    --@test subroutine test_refinement_coarse() in ut_refic without refine in 2nd run
-    --Remove holes in parent cells: can coarse list update
-
 - include pfUnit into repo with subrepo
 
 - include parentCells into file
