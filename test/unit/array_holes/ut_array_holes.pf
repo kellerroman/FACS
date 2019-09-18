@@ -21,7 +21,63 @@ contains
         @assertEqual( 1, ar%nHoles, message=" Number Of Holes after Delete in Middle") 
 
         @assertEqual( 60, ar%newEntry(), message="New Entry in Middle") 
+        @assertEqual( 0, ar%nHoles, message=" Number Of Holes after Insert in Middle") 
+        @assertEqual( 100, ar%nEntry, message="Number Of Cells after Insert in Middle") 
+
+        @assertEqual( 100, ar%removeLast(), "Removing Last Entry" )
+        @assertEqual( 99, ar%nEntry, message="Number Of Cells after Delete Last Entry") 
+        @assertEqual( 0, ar%nHoles, message=" Number Of Holes after Delete Last Entry") 
     end subroutine Init
+
+    @test
+    subroutine DeleteToEnd()
+        type(holes) :: ar
+        integer :: i
+        call ar%init(100)
+        ! Problem if you delete Enties up until the end
+        do i = 90,100
+           call ar%removeEntry(i)
+        end do
+        @assertEqual( 89, ar%nEntry, message="Number Of Cells after Delete 9 Entries") 
+        @assertEqual( 0, ar%nHoles, message=" Number Of Holes after Delete 9 Entries") 
+    end subroutine DeleteToEnd
+
+    @test
+    subroutine HolesBeSorted()
+        type(holes) :: ar
+        integer :: i
+        call ar%init(100)
+        ! Problem if you delete Enties up until the end
+        call ar%removeEntry(8)
+        call ar%removeEntry(88)
+        call ar%removeEntry(3)
+        call ar%removeEntry(99)
+        call ar%removeEntry(43)
+        @assertEqual( 95, ar%nEntry, message="Number Of Cells after Delete of 5 Entries") 
+        @assertEqual( 5, ar%nHoles, message=" Number Of Holes after Delete of 5 Entries") 
+        @assertEqual( 3, ar%newEntry(), message="New Entry in Middle") 
+    end subroutine HolesBeSorted
+
+    @test
+    subroutine DeleteInMiddle()
+        type(holes) :: ar
+        integer :: i, nc1,nc2
+        call ar%init(24)
+        ! Problem if you delete Enties up until the end
+        do i = 10,18
+           call ar%removeEntry(i)
+        end do
+        write(*,'(A)' ) " ===== DELETE IN MIDDLE ====="
+        do 
+            if (ar % nHoles == 0) exit
+            ! write(*,'(A,I0," ",I0)',ADVANCE="NO") "HOLES:", ar % nHoles, ar % lastEntry
+            nc1 = ar % removeLast()
+            nc2 = ar % newEntry()
+            write(*,*) " MOVING POINT FROM ", nc1," TO ", nc2, "HOLES:", ar % nHoles
+        end do
+        @assertEqual( 15, ar%nEntry, message="Number Of Cells after Delete 9 Entries") 
+        @assertEqual( 0, ar%nHoles, message=" Number Of Holes after Delete 9 Entries") 
+    end subroutine DeleteInMiddle
 
 @test(ifdef=INCLUDE_INTENTIONALLY_BROKEN)
     subroutine DeleteOutOfBounds()
