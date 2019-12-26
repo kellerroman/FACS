@@ -1,5 +1,5 @@
 module ut_refic
-    use pfunit_mod
+    use pfunit
     use unittest_environment
     
 contains

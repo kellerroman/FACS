@@ -1,5 +1,5 @@
 module ut_array_holes
-use pfunit_mod
+use pfunit
 use array_holes
 
 implicit none

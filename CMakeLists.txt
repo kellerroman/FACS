@@ -123,7 +123,7 @@ target_link_libraries(adapt.exe choose)
 
 add_subdirectory(tools)
 if (${PFUNIT})
-    find_package(pFUnit REQUIRED)
+    find_package(PFUNIT REQUIRED)
     enable_testing()
     add_subdirectory(test)
 endif()
